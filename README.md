@@ -2,7 +2,7 @@
 
 AgentBench compares **versioned agent harnesses and their underlying models** on the same tasks. The built-in Support Operations suite evaluates account lookup, refunds, and case routing across 60 simulated tasks.
 
-- **Website** [AgentBench Observatory](https://agentbench-observatory.swoonycondor.chatgpt.site)
+- **Website** [AgentBench Observatory](https://ai-agents-benchmark-platform.vercel.app)
 - **Design** [Figma](https://www.figma.com/design/9Pw7egO1MOKiIgqkJ5CktN)
 
 ## Run locally
