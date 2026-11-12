@@ -16,12 +16,21 @@ export async function request(path,{query={},method='GET',token,body,signal}={})
   return response.status===204||response.headers.get('content-length')==='0'?null:response.json();
 }
 
+export async function allRows(name,query,signal){
+  const records=[], pageSize=200;
+  while(true){
+    const page=await request('/rest/v1/'+name,{query:{...query,limit:pageSize,offset:records.length},signal});
+    records.push(...page);
+    if(page.length<pageSize)return records;
+  }
+}
+
 export async function catalog(signal){
   const get=(name,query)=>request('/rest/v1/'+name,{query,signal});
   const [agents,benchmarks,leaders,peers,groups]=await Promise.all([
-    get('agents',{select:'id,slug,name,category,license_type,form_factor,status,homepage_url,repo_url,price_tier,description',order:'name,id',limit:300}),
+    allRows('agents',{select:'id,slug,name,category,license_type,form_factor,status,homepage_url,repo_url,price_tier,description',order:'name,id'},signal),
     get('benchmarks',{select:'id,slug,name,domain,description,primary_metric,contamination_risk,paper_url,repo_url',order:'name,id',limit:150}),
-    get('v_leaderboard',{select:'*',order:'benchmark_slug,metric,verified.desc,normalized_score.desc.nullslast,run_id',limit:500}),
+    allRows('v_leaderboard',{select:'*',order:'benchmark_slug,metric,verified.desc,normalized_score.desc.nullslast,run_id'},signal),
     get('v_peer_percentile',{select:'*',order:'peer_group,peer_percentile.desc,run_id',limit:500}),
     get('peer_groups',{select:'id,name,rule',order:'name,id',limit:100})
   ]);

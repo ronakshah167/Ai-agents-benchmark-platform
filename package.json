@@ -1,1 +1,20 @@
-{"name":"agentbench-observatory","private":true,"scripts":{"build":"node scripts/prepare-demo.mjs && next build","dev":"node scripts/prepare-demo.mjs && next dev","check":"node scripts/check.mjs"},"dependencies":{"next":"16.4.6","react":"19.2.4","react-dom":"19.2.4","recharts":"3.10.1"},"devDependencies":{"@tailwindcss/postcss":"4.3.5","postcss":"8.5.32","tailwindcss":"4.3.5"}}
+{
+  "name": "agentbench-observatory",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/prepare-demo.mjs && next build",
+    "dev": "node scripts/prepare-demo.mjs && next dev",
+    "check": "node scripts/check.mjs && node scripts/check-agent-pairs.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
+    "postcss": "8.5.32",
+    "tailwindcss": "4.3.5"
+  }
+}

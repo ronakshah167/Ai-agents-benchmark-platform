@@ -109,3 +109,11 @@ The deterministic demo uses zero model API calls. A source collection job consum
 ### Roadmap
 
 Integrate official benchmark environments and source-specific parsers, add curator-approved discovery and score publication, deploy isolated workers with telemetry, and expand the public analytics and alert delivery after acquiring comparable measurements.
+
+### Named agent comparisons
+
+Open **Compare** and choose two agents from the entire public registry, or start from an agent profile. Shared rows match the exact evaluation protocol and compare the best published configuration on each side. The profile retains the other configurations. When no score matches, the page lists each side's available scores separately. The registry distinguishes sourced profiles from profiles with published benchmark scores.
+
+The first external release includes Terminal-Bench's official 4.1 leaderboard and 2.0/2.1 revision study, plus a selected Harbor 2.0 snapshot. The migration preserves these as separate evaluation cohorts. Missing cost, trial counts and uncertainty are shown as unavailable.
+
+OSWorld-Verified computer-use results come from the official workbook. The 369-task and 361-task splits, step budgets and action modes are distinct cohorts. Only named agent systems and identified computer-use configurations were imported.

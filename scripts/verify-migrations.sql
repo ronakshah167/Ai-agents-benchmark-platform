@@ -43,3 +43,29 @@ do $$ declare job public.benchmark_jobs; begin
     raise exception 'Valid lease failed';
   end if;
 end $$;
+
+reset role;
+begin;
+\ir ../supabase/migrations/20261112000500_publish_agent_benchmarks.sql
+commit;
+set role anon;
+do $$ begin
+  if (select count(*) from public.agents where status='active') <> 48 or
+     (select count(*) from public.v_published_scores where benchmark_slug='terminal-bench') <> 74 then
+    raise exception 'Published agent registry regression';
+  end if;
+end $$;
+reset role;
+
+begin;
+\ir ../supabase/migrations/20261112000600_publish_osworld_agents.sql
+commit;
+set role anon;
+do $$ begin
+  if (select count(*) from public.agents where status='active') <> 57 or
+     (select count(*) from public.v_published_scores where benchmark_slug='osworld-verified') <> 24 or
+     (select count(distinct agent_slug) from public.v_published_scores) <> 30 then
+    raise exception 'OSWorld public coverage regression';
+  end if;
+end $$;
+reset role;
