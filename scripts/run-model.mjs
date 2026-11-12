@@ -8,6 +8,8 @@ const provider=process.env.BENCH_PROVIDER?.trim() || 'Custom endpoint';
 const strategy=process.env.BENCH_STRATEGY || 'verify';
 const strategies={verify:'Cross-check account verification using the verify tool before finalizing.',direct:'Use the fewest calls necessary while following policy.'};
 const output=process.argv[2];
+const attemptCount=Number(process.env.BENCH_ATTEMPTS ?? 1);
+if(![1,3].includes(attemptCount))throw Error('BENCH_ATTEMPTS must be 1 or 3.');
 if(!endpoint||!model||!name||!version||!output||!Object.hasOwn(strategies,strategy)){
   throw Error('Set BENCH_ENDPOINT, BENCH_MODEL, BENCH_AGENT, BENCH_VERSION, and pass an output path. BENCH_STRATEGY accepts verify or direct.');
 }
@@ -66,11 +68,16 @@ async function evaluate(task){
   return {...session.score(answer),latency_ms:Math.round(performance.now()-start),cost_usd:null,tokens:tokensReported?tokens:null};
 }
 
-const trials=[];
-for(const scenario of scenarios){
-  for(const task of scenario.tasks)trials.push(await evaluate(task));
-  process.stderr.write('Completed '+trials.length+' / 60 tasks\n');
+const attempts=[];
+for(let attempt=0;attempt<attemptCount;attempt++){
+  const batch=[];
+  for(const scenario of scenarios){
+    for(const task of scenario.tasks)batch.push(await evaluate(task));
+    process.stderr.write('Attempt '+(attempt+1)+'/'+attemptCount+' · '+batch.length+' / 60 tasks\n');
+  }
+  attempts.push(batch);
 }
+const [trials,...repeats]=attempts;
 const metric=rows=>({...aggregate(rows),cost_usd:null});
 const report={
   format:'agentbench-external-v1',
@@ -79,7 +86,7 @@ const report={
   agent:{id:agentId,name,version,harness:strategy==='verify'?'Model tools · verification prompt':'Model tools · direct prompt',model_id:modelId,initials:name.slice(0,2).toUpperCase(),color:'violet'},
   run:{id:agentId+'-'+Date.now(),agent_id:agentId,suite_id:suite.id,release:0,source:'external',run_date:new Date().toISOString().slice(0,10),...metric(trials),
     breakdown:scenarios.map(s=>({scenario_id:s.id,...metric(trials.filter(t=>t.scenario_id===s.id))}))},
-  trials,
+  trials,...(repeats.length?{repeats}:{}),
 };
 await writeFile(output,JSON.stringify(report,null,2)+'\n',{flag:'wx'});
 console.log(output);

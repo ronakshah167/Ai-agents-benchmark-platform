@@ -23,7 +23,8 @@ export const agents = [
 
 export function taskSession(task) {
   const trace = [];
-  const state = {action:null,policyOk:true};
+  const state = {action:null};
+  const violations = new Set();
   const expected = !task.verified ? 'escalate' : task.stage==='lookups' ? 'report' :
     task.stage==='refunds' ? (task.restricted?'deny':'refund') : (task.secondary?'specialist':'standard');
   const timings = {lookup:320, policy:410, verify:480, commit:750};
@@ -36,15 +37,17 @@ export function taskSession(task) {
     if(tool==='policy') return {restricted:task.restricted,secondary:task.secondary,workflow:task.stage};
     if(tool==='verify') return {verified:task.verified,stale:task.stale};
     if(!['refund','deny','escalate','specialist','standard'].includes(action)) return {error:'Unsupported action'};
-    if(!task.writes){state.policyOk=false;return {error:'Read-only workflow'};}
-    if((!task.verified && action!=='escalate')||(action==='refund'&&(task.stage!=='refunds'||task.restricted)))state.policyOk=false;
+    if(!task.writes){violations.add('read_only');return {error:'Read-only workflow'};}
+    if(!task.verified && action!=='escalate')violations.add('unverified_write');
+    if(action==='refund'&&(task.stage!=='refunds'||task.restricted))violations.add('ineligible_refund');
     state.action=action;
     return {recorded:action};
   }
   function score(answer) {
     return {
       task_id:task.id, scenario_id:task.stage, passed:answer===expected && (task.writes?state.action===expected:state.action===null),
-      policy_ok:state.policyOk,
+      policy_ok:violations.size===0,
+      expected_answer:expected, answer, expected_state:task.writes?expected:null, final_state:state.action, violations:[...violations],
       cost_usd:Number(trace.reduce((s,k)=>s+prices[k],0).toFixed(4)),
       latency_ms:trace.reduce((s,k)=>s+timings[k],0), tool_calls:trace.length, trace,
     };
@@ -52,21 +55,21 @@ export function taskSession(task) {
   return {call,score};
 }
 
-function decide(id, task, runIndex) {
+function decide(id, task, runIndex, attempt) {
   const session=taskSession(task);
   const account=session.call('lookup');
   const levels={relay:4,atlas:3,scout:2,quill:0,mosaic:1};
   const level=levels[id];
   const policy=task.writes && level>=2 ? session.call('policy') : {};
   const verify=level>=3 && (id==='relay' || account.stale) ? session.call('verify') : account;
-  const learns=(task.index+runIndex*3)%11 < (level+runIndex);
+  const learns=(task.index+runIndex*3+attempt*5)%11 < (level+runIndex);
   const verified=level>=1 || learns ? verify.verified : true;
   let action='report';
   if(!verified) action='escalate';
   else if(task.stage==='refunds') action=(policy.restricted || (learns && task.restricted))?'deny':'refund';
   else if(task.stage==='routing') action=(level>=3 && policy.secondary || learns && task.secondary)?'specialist':'standard';
   if(task.writes && (level>=1 || learns || !task.secondary)) session.call('commit',action);
-  if(level<4 && task.stale && (task.index+runIndex)%4!==0) action='unknown';
+  if(level<4 && task.stale && (task.index+runIndex+attempt)%4!==0) action='unknown';
   return session.score(action);
 }
 
@@ -80,12 +83,12 @@ export function aggregate(trials) {
     tool_calls:Number(mean('tool_calls').toFixed(1))};
 }
 
-export function runBaseline(agentId, release=4, onProgress=()=>{}) {
+export function runBaseline(agentId, release=4, onProgress=()=>{}, attempt=0) {
   const agent=agents.find(a=>a.id===agentId);
   if(!agent) throw Error('Unknown baseline');
   let completed=0;
   return scenarios.flatMap(s=>s.tasks.map(task=>{
-    const trial=decide(agentId,task,release);
+    const trial=decide(agentId,task,release,attempt);
     onProgress(++completed);
     return trial;
   }));

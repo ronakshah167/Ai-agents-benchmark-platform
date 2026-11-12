@@ -2,6 +2,8 @@ import {aggregate,runBaseline,snapshot} from './engine.mjs';
 import {supabase} from './config.mjs';
 import {copy} from './copy.mjs';
 import {readReports} from './import.mjs';
+import {runAttempts,passAll} from './evidence.mjs';
+import {evidenceCopy,evidenceList,pairedView,taskRows} from './evidence-view.mjs';
 
 const $=id=>document.getElementById(id);
 const cookie=key=>document.cookie.split('; ').find(part=>part.startsWith(key+'='))?.split('=')[1];
@@ -9,11 +11,11 @@ function setCookie(key,value,maxAge=15552000){
   document.cookie=key+'='+value+'; Path=/; SameSite=Lax; Max-Age='+maxAge+(location.protocol==='https:'?'; Secure':'');
 }
 const preference=cookie('ab_consent')==='yes';
-const state={lang:preference&&cookie('ab_lang')==='hi'?'hi':'en',theme:preference&&['dark','light'].includes(cookie('ab_theme'))?cookie('ab_theme'):(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',data:null,origin:'baseline'};
-const labels=()=>copy[state.lang];
+const state={lang:preference&&cookie('ab_lang')==='hi'?'hi':'en',theme:preference&&['dark','light'].includes(cookie('ab_theme'))?cookie('ab_theme'):(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',logAgent:'quill',attempt:0,outcome:'failed',data:null,origin:'baseline'};
+const labels=()=>({...copy[state.lang],...evidenceCopy[state.lang]});
 let original;
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const routes=['overview','compare','trends','faq'];
+const routes=['overview','compare','trends','evidence','faq'];
 const route=()=>routes.includes(location.hash.slice(1))?location.hash.slice(1):'overview';
 const metrics=[['success_pct','success'],['policy_pct','policy'],['p95_ms','latency'],['cost_usd','cost'],['tool_calls','tools']];
 const lower=new Set(['p95_ms','cost_usd','tool_calls']);
@@ -26,7 +28,6 @@ const display=(key,v)=>v==null?'—':key.endsWith('_pct')?pct(v):key==='p95_ms'?
 const opt=(value,name,selected)=>'<option value="'+e(value)+'"'+(value===selected?' selected':'')+'>'+e(name)+'</option>';
 const tag=(value,type='')=>'<span class="tag '+type+'">'+e(value)+'</span>';
 const title=(title,sub)=>'<header class="page-title"><span class="kicker">'+labels().suiteName+'</span><h1>'+title+'</h1><p>'+sub+'</p></header>';
-const iconArt='<svg class="hero-art" viewBox="0 0 445 228" aria-hidden="true"><g class="grid"><path d="M8 30h420M8 62h420M8 94h420M8 126h420M8 158h420M8 190h420M40 16v195m40-195v195m40-195v195m40-195v195m40-195v195m40-195v195m40-195v195m40-195v195m40-195v195m40-195v195"/></g><g class="orbit"><path d="M194 113a94 68 0 1 0 188 0 94 68 0 1 0-188 0Zm30 0a64 45 0 1 0 128 0 64 45 0 1 0-128 0Zm30 0a34 24 0 1 0 68 0 34 24 0 1 0-68 0Z"/></g><path d="M20 181l79-44 62 16 59-55 69 14 64-56 55 14"/><circle cx="99" cy="137" r="4"/><circle cx="161" cy="153" r="4"/><circle cx="220" cy="98" r="4"/><circle cx="289" cy="112" r="6"/><circle cx="353" cy="56" r="4"/><circle cx="408" cy="70" r="4"/></svg>';
 const links=[['SWE-bench','https://github.com/SWE-bench/SWE-bench'],['OSWorld','https://github.com/xlang-ai/OSWorld'],['τ-bench','https://github.com/sierra-research/tau2-bench'],['Inspect AI','https://github.com/UKGovernmentBEIS/inspect_ai']];
 
 function chrome(){
@@ -69,23 +70,23 @@ function overview(){
   const t=labels(), cohort=rows(), first=cohort[0]?.s;
   const best=cohort.length?Math.max(...cohort.map(({s})=>s.success_pct)):null;
   const cost=median(cohort.map(({s})=>s.cost_usd).filter(v=>v!=null));
-  const cards=[[t.agents,cohort.length,t.suiteName,'◈'],[t.tasks,first?.n??'—',t.scope,'▤'],[t.bestSuccess,best===null?'—':pct(best),t.success,'↗'],[t.cost,display('cost_usd',cost),t.median,'$']];
-  return '<section class="hero">'+iconArt+'<div class="intro"><span class="kicker">'+t.scope+'</span><h1>'+t.heading+'</h1><p>'+t.sub+'</p><div class="actions"><button class="button primary" data-action="run">▷ '+t.run+'</button><a class="button" href="#faq">'+t.view+' ↗</a><button class="button ghost" data-action="'+(state.origin==='external'?'restore':'import')+'">'+(state.origin==='external'?t.restore:t.import)+'</button></div></div></section>'+
+  const cards=[[t.agents,cohort.length,t.suiteName],[t.tasks,first?.n??'—',t.scope],[t.bestSuccess,best===null?'—':pct(best),t.success],[t.cost,display('cost_usd',cost),t.median]];
+  return '<section class="hero"><div class="intro"><span class="kicker">'+t.scope+'</span><h1>'+t.heading+'</h1><p>'+t.sub+'</p><div class="actions"><button class="button primary" data-action="run">▷ '+t.run+'</button><a class="button" href="#faq">'+t.view+' ↗</a><button class="button ghost" data-action="'+(state.origin==='external'?'restore':'import')+'">'+(state.origin==='external'?t.restore:t.import)+'</button></div></div></section>'+
     '<div class="data-bar"><span class="tag"><span class="dot"></span>'+t[state.origin]+'</span><span>'+t.suiteName+' v'+e(state.data.suite.version)+' · '+(state.origin==='external'?t.measured:t.simulated)+'</span></div>'+
-    '<section aria-label="'+t.summary+'" class="cards">'+cards.map(([label,value,caption,glyph])=>'<div class="card"><div class="metric-label">'+label+'<span aria-hidden="true" class="metric-icon">'+glyph+'</span></div><div class="value">'+value+'</div><div class="caption">'+caption+'</div></div>').join('')+'</section>'+
+    '<section aria-label="'+t.summary+'" class="cards">'+cards.map(([label,value,caption])=>'<div class="card"><div class="metric-label">'+label+'</div><div class="value">'+value+'</div><div class="caption">'+caption+'</div></div>').join('')+'</section>'+
     '<section class="section"><div class="section-head"><div><h2>'+t.leader+'</h2><p>'+t.leaderSub+'</p></div>'+filters(true)+'</div><div class="panel" id="leaderboard">'+leaderboard()+'</div></section>';
 }
 
 function compare(){
   const t=labels();
   const items=state.ids.map(agent).filter(Boolean);
-  const active=items.map(a=>({a,s:runFor(a.id)?scope(runFor(a.id)):null}));
+  const active=items.map(a=>{const run=runFor(a.id);return {a,s:run?scope(run):null,attempts:runAttempts(run)};});
   const grid=active.length<2?'<div class="empty">'+t.pick+'</div>':'<div class="table-wrap" tabindex="0" aria-label="'+t.compare+'"><table><thead><tr><th scope="col">'+t.metric+'</th>'+active.map(({a})=>'<th scope="col">'+nameCell(a)+'</th>').join('')+'</tr></thead><tbody><tr><td>'+t.model+'</td>'+active.map(({a})=>'<td>'+e(modelName(a))+'</td>').join('')+'</tr>'+metrics.map(([key,label])=>{
     const available=active.filter(({s})=>s?.[key]!=null).map(({s})=>s[key]);
     const best=(lower.has(key)?Math.min:Math.max)(...available);
     return '<tr><td>'+t[label]+'</td>'+active.map(({s})=>'<td class="num">'+(available.length>1&&s?.[key]===best?tag(display(key,s[key])+' · '+t.best,'good'):display(key,s?.[key]))+'</td>').join('')+'</tr>';
-  }).join('')+'<tr><td>'+t.sample+'</td>'+active.map(({s})=>'<td>'+e(s?.n??'—')+'</td>').join('')+'</tr></tbody></table></div>';
-  return title(t.compareTitle,t.compareSub)+'<div class="section-head"><div class="filters">'+state.data.agents.map(a=>'<label class="button"><input type="checkbox" data-agent="'+e(a.id)+'"'+(state.ids.includes(a.id)?' checked':state.ids.length>=3?' disabled':'')+'> '+e(a.name)+'</label>').join('')+'</div>'+filters()+'</div><div class="panel">'+grid+'<div class="table-foot">'+(state.origin==='external'?t.externalNote:t.scopeNote)+'</div></div>';
+  }).join('')+'<tr><td>'+t.reliability+'</td>'+active.map(({attempts})=>'<td class="num">'+display('success_pct',passAll(attempts,state.scenario))+'</td>').join('')+'</tr><tr><td>'+t.sample+'</td>'+active.map(({s})=>'<td>'+e(s?.n??'—')+'</td>').join('')+'</tr></tbody></table></div>';
+  return title(t.compareTitle,t.compareSub)+'<div class="section-head"><div class="filters">'+state.data.agents.map(a=>'<label class="button"><input type="checkbox" data-agent="'+e(a.id)+'"'+(state.ids.includes(a.id)?' checked':state.ids.length>=3?' disabled':'')+'> '+e(a.name)+'</label>').join('')+'</div>'+filters()+'</div><div class="panel">'+grid+'<div class="table-foot">'+(state.origin==='external'?t.externalNote:t.scopeNote)+'</div><div class="table-foot">'+t.reliabilityNote+'</div></div>'+pairedView(active,state.scenario,t,e);
 }
 
 function trendChart(){
@@ -122,6 +123,30 @@ function trends(){
   const t=labels();
   return title(t.trendTitle,t.trendSub)+'<div class="section-head">'+filters()+'<select class="select" id="focus" aria-label="'+t.agent+'">'+state.data.agents.map(a=>opt(a.id,a.name,state.focus)).join('')+'</select></div><div class="split"><section class="panel pad"><div class="panel-head"><div><h2>'+t.history+'</h2><p>'+t.success+' · '+t.allHistory+'</p></div></div>'+trendChart()+trendTable()+'</section><section class="panel pad"><div class="panel-head"><h2>'+t.gap+'</h2></div>'+roadmap()+'</section></div>';
 }
+function evidence(){
+  const t=labels(), selected=agent(state.logAgent)??state.data.agents[0], attempts=runAttempts(runFor(selected.id));
+  const index=attempts[state.attempt]?state.attempt:0;
+  const visible=taskRows(attempts[index]??[],state.scenario,state.outcome);
+  return title(t.evidenceTitle,t.evidenceSub)+'<div class="section-head"><div class="filters">'+
+    '<select class="select" id="logAgent" aria-label="'+t.agent+'">'+state.data.agents.map(a=>opt(a.id,a.name,selected.id)).join('')+'</select>'+
+    '<select class="select" id="attempt" aria-label="'+t.attempt+'">'+attempts.map((_,i)=>opt(i,t.attempt+' '+(i+1),index)).join('')+'</select>'+
+    '<select class="select" id="outcome" aria-label="'+t.taskResults+'">'+[['all',t.allTasks],['failed',t.failed],['policy',t.violated]].map(([v,l])=>opt(v,l,state.outcome)).join('')+'</select></div>'+filters()+'</div>'+
+    '<div class="section-head evidence-meta"><span class="notes">'+visible.length+' / '+taskRows(attempts[index]??[],state.scenario,'all').length+' '+t.sample+'</span>'+
+    '<button type="button" class="button" data-action="export"'+(attempts.length?'':' disabled')+'>'+t.export+' ↓</button></div>'+
+    evidenceList(visible,t,e);
+}
+function exportEvidence(){
+  const selected=agent(state.logAgent)??state.data.agents[0], run=runFor(selected.id), attempts=runAttempts(run);
+  if(!attempts.length)return;
+  const {attempts:_,...summary}=run;
+  const payload={suite:state.data.suite,agent:selected,model:state.data.models.find(m=>m.id===selected.model_id),summary,attempts};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+  const download=document.createElement('a');
+  download.href=url;
+  download.download=selected.id+'-release-'+(release()+1)+'-evidence.json';
+  download.click();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
 function faq(){
   const t=labels();
   return title(t.methods,t.modelNote)+'<section class="panel faq" aria-label="'+t.faq+'">'+t.faqs.map(([q,a],i)=>'<details><summary>'+q+'</summary><p>'+a+'</p>'+(i===5?'<ul>'+links.map(([name,url])=>'<li><a target="_blank" rel="noopener" href="'+url+'">'+name+' ↗</a></li>').join('')+'</ul>':'')+'</details>').join('')+'</section>';
@@ -129,7 +154,7 @@ function faq(){
 function render(focus){
   chrome();
   if(!state.data){$('content').innerHTML='<div class="loading" role="status"><span class="spinner"></span>'+labels().loading+'</div>';return;}
-  $('content').innerHTML=({overview,compare,trends,faq})[route()]();
+  $('content').innerHTML=({overview,compare,trends,evidence,faq})[route()]();
   if(focus)document.querySelector(focus)?.focus({preventScroll:true});
 }
 
@@ -150,6 +175,9 @@ function replaceData(data,origin){
   state.origin=origin;
   state.ids=data.agents.slice(0,2).map(a=>a.id);
   state.focus=state.ids.at(-1);
+  state.logAgent=data.agents.find(a=>a.id==='quill')?.id??data.agents[0].id;
+  state.attempt=0;
+  state.outcome='failed';
   state.scenario='all';
   state.search='';
   state.release=null;
@@ -201,6 +229,7 @@ document.addEventListener('click',event=>{
   if(action==='compare')location.hash='compare';
   if(action==='cookies')preferences();
   if(action==='run')runDialog();
+  if(action==='export')exportEvidence();
   if(action==='import')importDialog();
   if(action==='restore')replaceData(original.data,original.origin);
   if(action==='start')void run();
@@ -225,8 +254,9 @@ document.addEventListener('change',event=>{
     if(state.consent)setCookie('ab_lang',state.lang);
     render();
   }
-  if(input.id==='scenario'||input.id==='release'||input.id==='focus'){
-    state[input.id]=input.id==='release'?Number(input.value):input.value;
+  if(['scenario','release','focus','logAgent','attempt','outcome'].includes(input.id)){
+    state[input.id]=['release','attempt'].includes(input.id)?Number(input.value):input.value;
+    if(input.id==='logAgent')state.attempt=0;
     render('#'+input.id);
   }
   if(input.dataset.agent){
