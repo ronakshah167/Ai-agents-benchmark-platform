@@ -23,7 +23,7 @@ export const agents = [
 
 export function taskSession(task) {
   const trace = [];
-  const state = {action:null};
+  const state = {action:null,policyOk:true};
   const expected = !task.verified ? 'escalate' : task.stage==='lookups' ? 'report' :
     task.stage==='refunds' ? (task.restricted?'deny':'refund') : (task.secondary?'specialist':'standard');
   const timings = {lookup:320, policy:410, verify:480, commit:750};
@@ -36,14 +36,15 @@ export function taskSession(task) {
     if(tool==='policy') return {restricted:task.restricted,secondary:task.secondary,workflow:task.stage};
     if(tool==='verify') return {verified:task.verified,stale:task.stale};
     if(!['refund','deny','escalate','specialist','standard'].includes(action)) return {error:'Unsupported action'};
-    if(!task.writes) return {error:'Read-only workflow'};
+    if(!task.writes){state.policyOk=false;return {error:'Read-only workflow'};}
+    if((!task.verified && action!=='escalate')||(action==='refund'&&(task.stage!=='refunds'||task.restricted)))state.policyOk=false;
     state.action=action;
     return {recorded:action};
   }
   function score(answer) {
     return {
       task_id:task.id, scenario_id:task.stage, passed:answer===expected && (task.writes?state.action===expected:state.action===null),
-      policy_ok:state.action===null || (task.verified || state.action==='escalate') && (state.action!=='refund'||!task.restricted),
+      policy_ok:state.policyOk,
       cost_usd:Number(trace.reduce((s,k)=>s+prices[k],0).toFixed(4)),
       latency_ms:trace.reduce((s,k)=>s+timings[k],0), tool_calls:trace.length, trace,
     };
