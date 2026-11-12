@@ -1,0 +1,35 @@
+[
+  {
+    "id": "swe-bench-repository",
+    "period": "daily",
+    "kind": "collect",
+    "payload": {
+      "collector": "github",
+      "url": "https://api.github.com/repos/SWE-bench/SWE-bench"
+    }
+  },
+  {
+    "id": "swe-verified-sample",
+    "period": "daily",
+    "kind": "collect",
+    "payload": {
+      "collector": "leaderboard",
+      "url": "https://raw.githubusercontent.com/SWE-bench/experiments/40f164d5b8f1d249bf95a6df8b74b577fd8e519d/evaluation/verified/20250720_mini-v0.0.0-Llama-4-Maverick-17B-Instruct/per_instance_details.json"
+    }
+  },
+  {
+    "id": "webarena-repository",
+    "period": "daily",
+    "kind": "collect",
+    "payload": {
+      "collector": "github",
+      "url": "https://api.github.com/repos/web-arena-x/webarena"
+    }
+  },
+  {
+    "id": "regressions",
+    "period": "daily",
+    "kind": "alerts",
+    "payload": {}
+  }
+]

@@ -297,6 +297,15 @@ async function load(){
 render();
 state.data=await load();
 original={data:state.data,origin:state.origin};
+const requested=new URLSearchParams(location.search);
+const logAgent=requested.get('agent');
+const logRelease=requested.get('release');
+if(location.hash==='#evidence'&&logAgent&&agent(logAgent)&&logRelease!==null&&
+   state.data.runs.some(run=>run.agent_id===logAgent&&run.release===Number(logRelease))){
+  state.logAgent=logAgent;
+  state.release=Number(logRelease);
+}
+
 state.ids=state.ids.filter(id=>agent(id));
 if(state.ids.length<2)state.ids=state.data.agents.slice(0,2).map(a=>a.id);
 if(!agent(state.focus))state.focus=state.data.agents[0].id;

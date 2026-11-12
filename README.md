@@ -71,3 +71,41 @@ Expected values are `25` and `false`. The browser reads only the seeded baseline
 | [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) | Keep scoring distinct from execution and inspect individual task traces |
 
 This repository ships its own small suite and does not embed the upstream datasets or claim their scores.
+
+## Registry and production stack
+
+The Next.js and Tailwind dashboard reads the reviewed registry. The original support evaluation stays available at `/demo/index.html`. See [architecture and implementation status](ARCHITECTURE.md) for the data flow and remaining work.
+
+```bash
+npm ci
+npm run dev
+npm run check
+npm run build
+python -m pip install -r backend/requirements.txt
+python -m unittest discover -s backend/tests
+python -m playwright install chromium
+python -m backend.fixture_run
+```
+
+To reproduce on a separate Supabase project, run the original demo schema and seed, followed by the numbered migrations in `supabase/migrations` in order. Apply each migration transactionally. Set the alternate project's URL and publishable key in `dist/config.mjs`. On a clean disposable Postgres database, run `psql -f scripts/verify-migrations.sql` to check migrations and permissions.
+
+For FastAPI and worker processes, copy the variable names from `backend/platform.env.example` to your host's secret configuration. `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are enough for database reads. Set `BENCH_READ_API_KEY` to enable the optional rate-limited REST API. The worker and registry verifier require a server-only `SUPABASE_SERVICE_ROLE_KEY`.
+
+```bash
+uvicorn backend.api:app
+python -m backend.worker enqueue
+python -m backend.worker work
+python -m backend.verify_registry
+```
+
+Run `enqueue` once daily from your scheduler. Repeated calls in a daily slot deduplicate. Run `verify_registry` after curating entries in `backend/registry.json`. It promotes only mapped candidates whose homepage and canonical repository can be reached and whose repository is active. Give reviewers access by inserting their existing Supabase Auth user ID into `public.benchmark_reviewers` from an administrator connection.
+
+To run the two local fixtures in a container, build the Dockerfile in `backend/fixture.Dockerfile` from the repository root. Use a reviewed and pinned image digest for repeatable deployments. Run with `--network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=256m --memory 1g --cpus 2 --pids-limit 160 --cap-drop ALL`. Apply an external wall-clock deadline. This fixture image does not execute arbitrary patches or browse external sites.
+
+### Cost planning
+
+The deterministic demo uses zero model API calls. A source collection job consumes HTTP requests, Postgres writes and worker uptime. Browser fixtures consume local or worker CPU and memory. For provider-based runs, estimate cost as `tasks × attempts × average per-task provider cost`, then add the sandbox and trace storage. For example, 60 tasks × 3 attempts × an assumed $0.02 per task is $3.60 in model fees. This is an estimate, not a provider quote.
+
+### Roadmap
+
+Integrate official benchmark environments and source-specific parsers, add curator-approved discovery and score publication, deploy isolated workers with telemetry, and expand the public analytics and alert delivery after acquiring comparable measurements.

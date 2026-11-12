@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Local warehouse fixture</title>
+<label>Name <input id="name"></label>
+<label>Region <select id="region"><option value="west">West</option><option value="east">East</option></select></label>
+<button id="save">Save</button><output id="state"></output>
+<script>
+document.getElementById('save').onclick=()=>{
+ const name=document.getElementById('name').value.trim();
+ const region=document.getElementById('region').value;
+ document.getElementById('state').textContent=name ? name+' | '+region : '';
+};
+</script></html>

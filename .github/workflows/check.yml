@@ -1,0 +1,40 @@
+name: Platform checks
+on:
+  pull_request:
+  push:
+    branches: [main, registry-platform]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run check && npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: pip install -r backend/requirements.txt
+      - run: python -m unittest discover -s backend/tests -v
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m backend.fixture_run
+      - run: psql -h localhost -U postgres -d postgres -f scripts/verify-migrations.sql
+        env:
+          PGPASSWORD: ci-only

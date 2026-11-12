@@ -1,0 +1,12 @@
+{
+  "agents": [
+    {"slug":"claude-code","repo":"anthropics/claude-code","homepage":"https://code.claude.com/"},
+    {"slug":"openhands","repo":"OpenHands/OpenHands","homepage":"https://openhands.dev/"},
+    {"slug":"aider","repo":"Aider-AI/aider","homepage":"https://aider.chat/"},
+    {"slug":"openai-codex","repo":"openai/codex","homepage":"https://openai.com/codex/"}
+  ],
+  "benchmarks": [
+    {"slug":"swe-bench-verified","repo":"SWE-bench/SWE-bench","homepage":"https://www.swebench.com/"},
+    {"slug":"webarena","repo":"web-arena-x/webarena","homepage":"https://webarena.dev/"}
+  ]
+}
