@@ -1,2 +1,2 @@
-// Set these to your project URL and publishable key to read from Supabase.
-export const supabase = {url:'', key:''};
+// The publishable key has read-only access to seeded benchmark data.
+export const supabase = {url:'https://ofedmcpjezuyrewitahe.supabase.co', key:'sb_publishable_D4us-l7IMFwjOVCU9UTsfA_x_QMBSiS'};
