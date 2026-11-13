@@ -73,11 +73,11 @@ export default function HeadToHead({agents, leaders, initial, tradeoffs}) {
 
   return <>
     <header className="hero"><h1>{t('Compare two agents')}</h1><p className="sub">{t('Choose any two named agents. See shared benchmark results and which scores are still missing.')}</p>
-      <div className="pair-pickers">{picker('First agent', left, right, setLeft)}<button className="swap" type="button" disabled={!active} onClick={() => {setLeft(right); setRight(left);}} title={t('Swap agents')} aria-label={t('Swap agents')}>⇄</button>{picker('Second agent', right, left, setRight)}</div>
+      <div className="pair-pickers" id="tour-pickers">{picker('First agent', left, right, setLeft)}<button className="swap" type="button" disabled={!active} onClick={() => {setLeft(right); setRight(left);}} title={t('Swap agents')} aria-label={t('Swap agents')}>⇄</button>{picker('Second agent', right, left, setRight)}</div>
       {active && <a className="link" href={'#compare/' + encodeURIComponent(left + ',' + right)}>{t('Link to this comparison')}</a>}
     </header>
     {!active ? <p className="panel empty">{t('Select two different agents.')}</p> : <>
-      <section className="panel comparison-results" aria-labelledby="comparison-title"><h2 id="comparison-title">{t('{left} vs {right}', {left: leftName, right: rightName})}</h2>
+      <section id="tour-results" className="panel comparison-results" aria-labelledby="comparison-title"><h2 id="comparison-title">{t('{left} vs {right}', {left: leftName, right: rightName})}</h2>
         {shared.length ? <><p className="muted">{t('Each row uses the top leaderboard entry per agent for that protocol. Deltas are first agent minus second agent. The linked runs show the model and settings used.')}</p>
           <div className="filters comparison-toolbar"><label>{t('Filter by benchmark')} <select value={selected} onChange={event => setFilter(event.target.value)}>
             <option value="">{t('All benchmarks')}</option>{benchmarks.map(benchmark => <option key={benchmark}>{benchmark}</option>)}

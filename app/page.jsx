@@ -4,7 +4,8 @@ import {CartesianGrid,ResponsiveContainer,Scatter,ScatterChart,Tooltip,XAxis,YAx
 import {allRows,catalog,cohort,number,request,safeUrl} from './data.mjs';
 import HeadToHead from './head-to-head.jsx';
 import {BackToTop, Loading, PreferencesControls, PreferencesProvider, usePreferences} from './preferences.jsx';
-import {faqs} from './translations.mjs';
+import {faqs, tourStops} from './translations.mjs';
+import SiteTour, {rememberTour, shouldStartTour} from './site-tour.jsx';
 
 const tabs=[['home','Leaderboard'],['agents','Agents'],['benchmarks','Benchmarks'],['compare','Compare'],['peers','Peer groups'],['method','Methodology'],['faq','FAQs']];
 const go=(path,id='')=>'#'+path+(id?'/'+encodeURIComponent(id):'');
@@ -38,7 +39,7 @@ function Cohort({data}){
  const fields=[['category','Category'],['form_factor','Form factor'],['license_type','License'],['price_tier','Price tier']];
  const rows=all.filter(r=>fields.every(([field])=>!filters[field]||r[field]===filters[field]));
  const focus=all[0];
- return <><div className="filters"><label>{t('Comparable cohort')} <select value={key} onChange={e=>{setChosen(e.target.value);setFilters({});}}>
+ return <><div className="filters" id="tour-leaderboard"><label>{t('Comparable cohort')} <select value={key} onChange={e=>{setChosen(e.target.value);setFilters({});}}>
  {[...groups].map(([id,[r]],i)=><option key={id} value={id}>{r.benchmark} · {r.metric} · {r.dataset_version}/{r.dataset_split} · {r.harness} · {i+1}</option>)}</select></label>
  {fields.map(([field,label])=><label key={field}>{t(label)} <select value={filters[field]??''} onChange={e=>setFilters({...filters,[field]:e.target.value})}><option value="">{t('All')}</option>{[...new Set(all.map(r=>r[field]).filter(Boolean))].map(v=><option key={v} value={v}>{asLabel(v)}</option>)}</select></label>)}</div>
  <p className="muted">{t('Method {version} · {trials}. Each cohort fixes dataset, split, harness and runtime constraints.',{version:focus.method_version,trials:focus.n_trials==null?t('Attempt count not reported'):t('{count} recorded trial(s)',{count:focus.n_trials})})}</p>
@@ -66,7 +67,7 @@ function Directory({items,id,type,leaders}){
    return <><div className="hero"><h1>{item.name}</h1><p>{item.description??asLabel(item.category??item.domain)}</p><p className="actions">{external(item.homepage_url??item.paper_url,t('Website'))}{external(item.repo_url,t('Repository'))}{type==='agents'&&<a className="link" href={go('compare',item.slug)}>{t('Compare this agent')}</a>}{item.contamination_risk&&<span>{t('Contamination risk {risk}',{risk:item.contamination_risk})}</span>}</p></div>
    {type==='agents'?<><Versions key={item.id} id={item.id}/><AgentScores key={item.slug} slug={item.slug}/></>:<div className="panel"><Rows rows={leaders.filter(r=>r.benchmark_slug===id)}/></div>}</>;
  }
- return <><h1>{t(type==='agents'?'Agent registry':'Benchmark registry')}</h1><div className="filters"><input type="search" aria-label={t('Search registry')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={t('Search registry')}/></div><div className="grid-cards">{visible.map(item=><article className="card" key={item.id}><h2><a href={go(type,item.slug)}>{item.name}</a></h2><p className="muted">{asLabel(item.category??item.domain)}</p>{type==='agents'&&<span className="badge">{t(scored.has(item.slug)?'Benchmark results':'No published score')}</span>}<p>{item.description}</p></article>)}</div>{!visible.length&&<Empty>{items.length?'No entries match this search.':'Reviewed entries will appear here.'}</Empty>}</>;
+ return <><h1>{t(type==='agents'?'Agent registry':'Benchmark registry')}</h1><div className="filters" id={type==='agents'?'tour-registry':undefined}><input type="search" aria-label={t('Search registry')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={t('Search registry')}/></div><div className="grid-cards">{visible.map(item=><article className="card" key={item.id}><h2><a href={go(type,item.slug)}>{item.name}</a></h2><p className="muted">{asLabel(item.category??item.domain)}</p>{type==='agents'&&<span className="badge">{t(scored.has(item.slug)?'Benchmark results':'No published score')}</span>}<p>{item.description}</p></article>)}</div>{!visible.length&&<Empty>{items.length?'No entries match this search.':'Reviewed entries will appear here.'}</Empty>}</>;
 }
 function Versions({id}){
  const {t}=usePreferences();
@@ -122,22 +123,35 @@ function Review({admin=false}){
 }
 function Method(){
  const {t}=usePreferences();return <><h1>{t('Methodology')}</h1><div className="panel stack"><p>{t('Agents are versioned systems. A score links to its source and run protocol. Candidate entries and raw submissions are private until reviewed.')}</p><p>{t('Normalize each metric within documented bounds. Comparisons require identical benchmark, split, dataset version, harness, trial count, method version and constraints. The dashboard shows whether the reported confidence intervals overlap. That alone is not a significance test.')}</p><p>{t('Wilson intervals require known binary outcomes and a task count. Missing confidence intervals, cost, or other dimensions stay unavailable. Sponsored results must follow the same protocol.')}</p><p><a className="link" href={go('submit')}>{t('Submit a correction or dispute')}</a></p></div></>;}
-function Faq() {
+function Faq({onStartTour}) {
  const {t}=usePreferences();
- return <><header className="hero"><h1>{t('FAQs')}</h1></header><section className="panel faq-list">
-   {faqs.map(([question,answer])=><details key={question}><summary>{t(question)}</summary><p>{t(answer)}</p></details>)}
+ return <><header className="hero"><h1>{t('FAQs')}</h1><p className="sub">{t('Find an agent, compare results, and check the evidence.')}</p><div className="actions"><button type="button" className="primary" onClick={onStartTour}>{t('Take the tour')}</button></div></header><section className="panel faq-list" id="tour-faq">
+   {faqs.map(([question,answer,destination,label])=><details key={question}><summary>{t(question)}</summary><p>{t(answer)}{destination && <> <a className="link" href={go(destination)}>{t(label)}</a></>}</p></details>)}
  </section></>;
 }
 
 function Dashboard(){
  const {t,openCookies}=usePreferences();
  const [attempt,retry]=useState(0);
+ const [tourStep,setTourStep]=useState(null);
  const [view,setView]=useState(['home','']),[data,setData]=useState(null),[error,setError]=useState('');
  useEffect(()=>{const update=()=>{const [page,id='']=location.hash.slice(1).split('/');let parsed='';try{parsed=decodeURIComponent(id);}catch{}setView([page||'home',parsed]);};update();addEventListener('hashchange',update);return()=>removeEventListener('hashchange',update);},[]);
  useEffect(()=>{const ctrl=new AbortController();catalog(ctrl.signal).then(setData).catch(e=>{if(!ctrl.signal.aborted)setError(e.message);});return()=>ctrl.abort();},[attempt]);
+ useEffect(()=>{if(shouldStartTour())setTourStep(0);},[]);
  const [page,id]=view;
+
+ function moveTour(step) {
+   const destination=go(tourStops[step].page);
+   if(location.hash!==destination)location.hash=destination;
+   setTourStep(step);
+ }
+ function closeTour() {
+   rememberTour();
+   setTourStep(null);
+   requestAnimationFrame(()=>document.getElementById('main-content')?.focus({preventScroll:true}));
+ }
  let content;
- if(page==='faq')content=<Faq/>;
+ if(page==='faq')content=<Faq onStartTour={()=>moveTour(0)}/>;
  else if(page==='method')content=<Method/>;
  else if(page==='submit'||page==='admin')content=<Review key={page} admin={page==='admin'}/>;
  else if(page==='runs')content=<Run key={id} id={id}/>;
@@ -146,7 +160,7 @@ function Dashboard(){
  else if(page==='agents'||page==='benchmarks')content=<Directory key={page} items={data[page]} id={id} type={page} leaders={data.leaders}/>;
  else if(page==='compare')content=<HeadToHead key={id} initial={id} agents={data.agents} leaders={data.leaders} tradeoffs={rows=><Tradeoffs key={rows[0].run_id} rows={rows}/>}/>;
  else if(page==='peers')content=<PeerGroups data={data}/>;
- else content=<><section className="hero dashboard-hero"><div className="hero-copy"><h1>{t('Benchmark AI agents')}</h1><p className="sub">{t('Compare versioned agents under the same conditions and follow each score back to its evidence.')}</p><div className="actions"><a className="button primary" href={go('compare')}>{t('Compare agents')} <span aria-hidden="true">→</span></a><a className="button" href={go('agents')}>{t('Explore agents')}</a><a className="link" href="/demo/index.html">{t('Run support benchmark')}</a></div></div>
+ else content=<><section className="hero dashboard-hero" id="tour-welcome"><div className="hero-copy"><h1>{t('Benchmark AI agents')}</h1><p className="sub">{t('Compare versioned agents under the same conditions and follow each score back to its evidence.')}</p><div className="actions"><a className="button primary" href={go('compare')}>{t('Compare agents')} <span aria-hidden="true">→</span></a><a className="button" href={go('agents')}>{t('Explore agents')}</a><a className="link" href="/demo/index.html">{t('Run support benchmark')}</a><button type="button" onClick={()=>moveTour(0)}>{t('Take the tour')}</button></div></div>
    <dl className="hero-stats"><div><dt>{t('Registered agents')}</dt><dd>{data.agents.length}</dd></div><div><dt>{t('Agents with scores')}</dt><dd>{new Set(data.leaders.map(r=>r.agent_slug)).size}</dd></div></dl>
  </section><h2>{t('Leaderboard')}</h2><Cohort data={data}/></>;
  return <>
@@ -159,6 +173,7 @@ function Dashboard(){
    <main className="shell" id="main-content" tabIndex={-1}>{content}</main>
    <footer className="shell foot"><span>AgentBench Observatory</span><div><a href="/demo/index.html">{t('Support benchmark and run logs')}</a><a href={go('submit')}>{t('Submit')}</a><a href={go('admin')}>{t('Admin')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
    <BackToTop/>
+   <SiteTour step={tourStep} page={page} ready={Boolean(data)} onMove={moveTour} onClose={closeTour}/>
  </>;
 }
 

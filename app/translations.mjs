@@ -1,4 +1,35 @@
 export const messages = {en: {}, hi: {
+  "Take the tour": "साइट का परिचय देखें",
+  "Pixel · Your guide": "पिक्सेल · आपका गाइड",
+  "Step {step} of {total}": "{total} में से चरण {step}",
+  "Skip tour": "परिचय छोड़ें",
+  "Back": "पीछे",
+  "Next": "आगे",
+  "Finish": "समाप्त करें",
+  "Welcome to AgentBench": "AgentBench में आपका स्वागत है",
+  "I’m Pixel. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.": "मैं पिक्सेल हूँ। मैं आपको एजेंट खोजना, दूसरे एजेंट से तुलना करना और स्कोर का स्रोत देखना सिखाऊँगा।",
+  "Start with the leaderboard": "लीडरबोर्ड से शुरू करें",
+  "Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.": "बेंचमार्क और परीक्षण सेटअप चुनने के लिए तुलना योग्य समूह का उपयोग करें। श्रेणी, स्वरूप, लाइसेंस या मूल्य श्रेणी से नतीजे फ़िल्टर करें।",
+  "Find an agent": "एजेंट खोजें",
+  "Search the registry by agent name. Open an agent to see its versions, models, and any published benchmark runs.": "रजिस्ट्री में एजेंट का नाम खोजें। उसके संस्करण, मॉडल और प्रकाशित बेंचमार्क रन देखने के लिए उसकी प्रोफ़ाइल खोलें।",
+  "Pick two agents": "दो एजेंट चुनें",
+  "Use the two menus to choose the agents you want to compare. The swap button reverses their order.": "तुलना के लिए दोनों मेनू से एजेंट चुनें। क्रम बदलने वाला बटन दोनों एजेंटों की जगह बदलता है।",
+  "Read the comparison": "तुलना के नतीजे पढ़ें",
+  "Filter the table by benchmark or click a column heading to sort. Delta is the first agent’s score minus the second’s. Open a linked configuration to check the source and evaluation settings.": "तालिका को बेंचमार्क से फ़िल्टर करें या क्रम बदलने के लिए कॉलम शीर्षक चुनें। अंतर पहले एजेंट के स्कोर में से दूसरे का स्कोर घटाने पर मिलता है। स्रोत और सेटिंग देखने के लिए कॉन्फ़िगरेशन लिंक खोलें।",
+  "Find help anytime": "कभी भी मदद पाएँ",
+  "The FAQs show how to find agents, interpret score gaps, and verify a result. You can replay this tour from the homepage or the FAQs.": "अक्सर पूछे जाने वाले सवालों में एजेंट खोजना, स्कोर का अंतर समझना और नतीजे की पुष्टि करना बताया गया है। यह परिचय होमपेज या सवालों वाले पेज से दोबारा देख सकते हैं।",
+  "Find an agent, compare results, and check the evidence.": "एजेंट खोजें, नतीजों की तुलना करें और प्रमाण देखें।",
+  "How do I filter the leaderboard?": "लीडरबोर्ड को कैसे फ़िल्टर करूँ?",
+  "On Leaderboard, choose a Comparable cohort first. Then narrow the results by category, form factor, license, or price tier.": "लीडरबोर्ड पर पहले तुलना योग्य समूह चुनें। फिर श्रेणी, स्वरूप, लाइसेंस या मूल्य श्रेणी से नतीजे फ़िल्टर करें।",
+  "How do I find an agent or model version?": "एजेंट या मॉडल संस्करण कैसे खोजूँ?",
+  "On Agents, search by the agent’s name and open its profile. The Versions section shows the underlying model when disclosed.": "एजेंट पेज पर नाम खोजकर प्रोफ़ाइल खोलें। अगर मॉडल का खुलासा हुआ है, तो वह संस्करण सेक्शन में दिखता है।",
+  "How do I compare two agents?": "दो एजेंटों की तुलना कैसे करूँ?",
+  "On Compare, select a first and second agent. Filter by benchmark or select a column heading to sort. Use Link to this comparison to share the pair.": "तुलना पेज पर पहला और दूसरा एजेंट चुनें। बेंचमार्क से फ़िल्टर करें या क्रम बदलने के लिए कॉलम शीर्षक चुनें। जोड़ी साझा करने के लिए इस तुलना का लिंक इस्तेमाल करें।",
+  "What does the Delta column mean?": "अंतर वाले कॉलम का क्या मतलब है?",
+  "Delta is the first agent’s score minus the second’s. For percentage scores, it is shown in percentage points. Check the confidence intervals when available.": "अंतर पहले एजेंट के स्कोर में से दूसरे का स्कोर घटाकर मिलता है। प्रतिशत वाले स्कोर का अंतर प्रतिशत अंकों में दिखता है। विश्वास अंतराल उपलब्ध हों तो उन्हें भी देखें।",
+  "Open leaderboard": "लीडरबोर्ड खोलें",
+  "Open agent registry": "एजेंट रजिस्ट्री खोलें",
+  "Open comparison": "तुलना खोलें",
   'Leaderboard': 'लीडरबोर्ड',
   'Agents': 'एजेंट',
   'Benchmarks': 'बेंचमार्क',
@@ -155,8 +186,28 @@ export const messages = {en: {}, hi: {
 }};
 
 export const faqs = [
+  ['How do I filter the leaderboard?', 'On Leaderboard, choose a Comparable cohort first. Then narrow the results by category, form factor, license, or price tier.', 'home', 'Open leaderboard'],
+  ['How do I find an agent or model version?', 'On Agents, search by the agent’s name and open its profile. The Versions section shows the underlying model when disclosed.', 'agents', 'Open agent registry'],
+  ['How do I compare two agents?', 'On Compare, select a first and second agent. Filter by benchmark or select a column heading to sort. Use Link to this comparison to share the pair.', 'compare', 'Open comparison'],
+  ['What does the Delta column mean?', 'Delta is the first agent’s score minus the second’s. For percentage scores, it is shown in percentage points. Check the confidence intervals when available.'],
   ['What is an agent benchmark?', 'A benchmark measures how an agent completes a defined set of tasks. Its model, tools and runtime settings can all affect the result.'],
   ['Why is a comparison missing a score?', 'A score appears in the shared table when both agents have published results on the same benchmark version, split and protocol. Results from other setups appear below the shared table.'],
   ['Where can I verify a score?', 'Open the linked run or configuration to see the benchmark source, evaluation settings and any released task evidence.'],
   ['How can I add an agent or correct a result?', 'Use the submission page to send a public source and a description for review.']
+];
+
+
+export const tourStops = [
+  {page: 'home', target: 'tour-welcome', title: 'Welcome to AgentBench',
+    copy: 'I’m Pixel. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.'},
+  {page: 'home', target: 'tour-leaderboard', title: 'Start with the leaderboard',
+    copy: 'Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.'},
+  {page: 'agents', target: 'tour-registry', title: 'Find an agent',
+    copy: 'Search the registry by agent name. Open an agent to see its versions, models, and any published benchmark runs.'},
+  {page: 'compare', target: 'tour-pickers', title: 'Pick two agents',
+    copy: 'Use the two menus to choose the agents you want to compare. The swap button reverses their order.'},
+  {page: 'compare', target: 'tour-results', title: 'Read the comparison',
+    copy: 'Filter the table by benchmark or click a column heading to sort. Delta is the first agent’s score minus the second’s. Open a linked configuration to check the source and evaluation settings.'},
+  {page: 'faq', target: 'tour-faq', title: 'Find help anytime',
+    copy: 'The FAQs show how to find agents, interpret score gaps, and verify a result. You can replay this tour from the homepage or the FAQs.'}
 ];

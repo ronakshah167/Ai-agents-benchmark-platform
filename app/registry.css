@@ -134,3 +134,44 @@ summary:hover { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.tour-dialog {
+  position: fixed;
+  inset: auto max(18px, calc((100vw - 1208px) / 2)) 22px auto;
+  width: min(410px, calc(100vw - 36px));
+  max-width: none;
+  max-height: calc(100dvh - 44px);
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--accent);
+  border-radius: 19px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 14px 55px var(--shadow);
+}
+.tour-dialog[open] { animation: tour-enter .24s ease-out; }
+.tour-dialog::backdrop { background: light-dark(#25204724, #08061457); }
+.tour-intro { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.tour-intro h2 { margin: 1px 0 0; line-height: 1.19; }
+.tour-name, .tour-progress { color: var(--muted); font-size: 12px; font-weight: 650; }
+#tour-copy { color: var(--muted); }
+.tour-robot { position: relative; flex: 0 0 58px; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 17px; background: var(--soft); }
+.robot-face { display: flex; align-items: center; justify-content: center; gap: 6px; width: 37px; height: 28px; margin-top: 5px; border-radius: 10px; background: var(--primary); }
+.robot-face i { width: 5px; height: 8px; border-radius: 5px; background: var(--on-primary); }
+.robot-antenna { position: absolute; top: 9px; height: 9px; width: 2px; background: var(--accent); }
+.robot-antenna::before { content: ''; display: block; width: 6px; height: 6px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.tour-progress { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 15px 0 9px; }
+.tour-dots { display: flex; gap: 4px; }
+.tour-dots i { width: 12px; height: 4px; border-radius: 4px; background: var(--rule); }
+.tour-dots .filled { background: var(--accent); }
+.tour-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.tour-skip { margin-inline-end: auto; }
+.tour-highlight { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 10px; scroll-margin-block-start: 24px; }
+@keyframes tour-enter { from { opacity: 0; transform: translateY(9px); } }
+@media (max-width: 620px) {
+  .tour-dialog { inset: auto 10px 10px; width: auto; max-height: calc(100dvh - 20px); padding: 15px; }
+  .tour-intro h2 { font-size: 20px; }
+  .tour-robot { flex-basis: 52px; height: 52px; }
+  .tour-robot .robot-antenna { top: 7px; }
+}
+body:has(.tour-dialog[open]) .cookie-banner { visibility: hidden; }
