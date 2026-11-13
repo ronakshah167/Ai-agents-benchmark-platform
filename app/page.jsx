@@ -5,6 +5,7 @@ import {allRows,catalog,cohort,number,request,safeUrl} from './data.mjs';
 import HeadToHead from './head-to-head.jsx';
 import {BackToTop, Loading, PreferencesControls, PreferencesProvider, usePreferences} from './preferences.jsx';
 import {faqs, tourStops} from './translations.mjs';
+import Character from './character.jsx';
 import SiteTour, {rememberTour, shouldStartTour} from './site-tour.jsx';
 
 const tabs=[['home','Leaderboard'],['agents','Agents'],['benchmarks','Benchmarks'],['compare','Compare'],['peers','Peer groups'],['method','Methodology'],['faq','FAQs']];
@@ -173,6 +174,7 @@ function Dashboard(){
    <main className="shell" id="main-content" tabIndex={-1}>{content}</main>
    <footer className="shell foot"><span>AgentBench Observatory</span><div><a href="/demo/index.html">{t('Support benchmark and run logs')}</a><a href={go('submit')}>{t('Submit')}</a><a href={go('admin')}>{t('Admin')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
    <BackToTop/>
+   {tourStep===null && <button className="pip-launcher" onClick={()=>moveTour(0)} aria-label={t('Take the tour')}><Character/><span>{t('Pip · Your guide')}</span></button>}
    <SiteTour step={tourStep} page={page} ready={Boolean(data)} onMove={moveTour} onClose={closeTour}/>
  </>;
 }
