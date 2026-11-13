@@ -12,7 +12,7 @@ function cookie(key, value, age = 15552000) {
 }
 
 export function PreferencesProvider({children}) {
-  const [theme, setTheme] = useState('system');
+  const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   const [consent, setConsent] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -20,7 +20,6 @@ export function PreferencesProvider({children}) {
     const saved = Object.fromEntries(document.cookie.split(';').map(part => part.trim().split('=')));
     const decision = saved[consentKey];
     if (decision === 'allow') {
-      if (['system', 'light', 'dark'].includes(saved[preferenceKeys[0]])) setTheme(saved[preferenceKeys[0]]);
       if (Object.hasOwn(messages, saved[preferenceKeys[1]])) setLanguage(saved[preferenceKeys[1]]);
     }
     setConsent(decision === 'allow' || decision === 'deny' ? decision : 'unset');
@@ -30,7 +29,7 @@ export function PreferencesProvider({children}) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = language;
     if (consent === 'allow') {
-      cookie(preferenceKeys[0], theme);
+      cookie(preferenceKeys[0], '', 0);
       cookie(preferenceKeys[1], language);
     }
   }, [consent, theme, language]);
@@ -44,7 +43,7 @@ export function PreferencesProvider({children}) {
   return <Preferences.Provider value={{t, language, setLanguage, theme, setTheme, openCookies: () => setSettingsOpen(true)}}>
     {children}
     {(consent === 'unset' || settingsOpen) && <section className="cookie-banner" aria-labelledby="cookie-heading">
-      <div><h2 id="cookie-heading">{t('Cookie preferences')}</h2><p>{t('Choose whether this browser remembers your theme and language. A cookie stores your choice. This dashboard uses no analytics or advertising cookies.')}</p></div>
+      <div><h2 id="cookie-heading">{t('Cookie preferences')}</h2><p>{t('Choose whether this browser remembers your language. The site always opens in light mode. This dashboard uses no analytics or advertising cookies.')}</p></div>
       <div className="actions"><button onClick={() => decide('deny')}>{t('Essential only')}</button><button className="primary" onClick={() => decide('allow')}>{t('Save preferences')}</button>{settingsOpen && consent !== 'unset' && <button onClick={() => setSettingsOpen(false)}>{t('Close')}</button>}</div>
     </section>}
   </Preferences.Provider>;

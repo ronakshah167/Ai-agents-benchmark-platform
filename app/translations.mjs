@@ -48,7 +48,7 @@ export const messages = {en: {}, hi: {
   'Skip to content': 'मुख्य सामग्री पर जाएँ',
   'Back to top': 'ऊपर जाएँ',
   'Cookie preferences': 'कुकी प्राथमिकताएँ',
-  'Choose whether this browser remembers your theme and language. A cookie stores your choice. This dashboard uses no analytics or advertising cookies.': 'चुनें कि यह ब्राउज़र आपकी थीम और भाषा याद रखे या नहीं। आपकी पसंद एक कुकी में सहेजी जाती है। इस डैशबोर्ड में विश्लेषण या विज्ञापन की कुकी नहीं हैं।',
+  'Choose whether this browser remembers your language. The site always opens in light mode. This dashboard uses no analytics or advertising cookies.': 'चुनें कि यह ब्राउज़र आपकी भाषा याद रखे या नहीं। साइट हमेशा लाइट मोड में खुलती है। इस डैशबोर्ड में विश्लेषण या विज्ञापन की कुकी नहीं हैं।',
   'Essential only': 'केवल आवश्यक',
   'Save preferences': 'प्राथमिकताएँ सहेजें',
   'Close': 'बंद करें',
