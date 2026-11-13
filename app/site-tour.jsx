@@ -2,6 +2,7 @@
 
 import {useEffect, useRef} from 'react';
 import {usePreferences} from './preferences.jsx';
+import Character from './character.jsx';
 import {tourStops} from './translations.mjs';
 
 const tourKey = 'agentbench-tour-v1';
@@ -48,7 +49,7 @@ export default function SiteTour({step, page, ready, onMove, onClose}) {
   return <dialog className="tour-dialog" ref={dialog} aria-labelledby="tour-title" aria-describedby="tour-copy" onCancel={event => {event.preventDefault(); onClose();}}>
     {stop && <>
       <div className="tour-intro">
-        <div className="tour-robot" aria-hidden="true"><span className="robot-antenna"/><span className="robot-face"><i/><i/></span></div>
+        <Character/>
         <div><p className="tour-name">{t('Pixel · Your guide')}</p><h2 id="tour-title" ref={title} tabIndex={-1}>{t(stop.title)}</h2></div>
       </div>
       <p id="tour-copy">{t(stop.copy)}</p>

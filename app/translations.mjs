@@ -1,13 +1,13 @@
 export const messages = {en: {}, hi: {
   "Take the tour": "साइट का परिचय देखें",
-  "Pixel · Your guide": "पिक्सेल · आपका गाइड",
+  "Pip · Your guide": "पिप · आपका गाइड",
   "Step {step} of {total}": "{total} में से चरण {step}",
   "Skip tour": "परिचय छोड़ें",
   "Back": "पीछे",
   "Next": "आगे",
   "Finish": "समाप्त करें",
   "Welcome to AgentBench": "AgentBench में आपका स्वागत है",
-  "I’m Pixel. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.": "मैं पिक्सेल हूँ। मैं आपको एजेंट खोजना, दूसरे एजेंट से तुलना करना और स्कोर का स्रोत देखना सिखाऊँगा।",
+  "I’m Pip. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.": "मैं पिप हूँ। मैं आपको एजेंट खोजना, दूसरे एजेंट से तुलना करना और स्कोर का स्रोत देखना सिखाऊँगा।",
   "Start with the leaderboard": "लीडरबोर्ड से शुरू करें",
   "Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.": "बेंचमार्क और परीक्षण सेटअप चुनने के लिए तुलना योग्य समूह का उपयोग करें। श्रेणी, स्वरूप, लाइसेंस या मूल्य श्रेणी से नतीजे फ़िल्टर करें।",
   "Find an agent": "एजेंट खोजें",
@@ -199,7 +199,7 @@ export const faqs = [
 
 export const tourStops = [
   {page: 'home', target: 'tour-welcome', title: 'Welcome to AgentBench',
-    copy: 'I’m Pixel. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.'},
+    copy: 'I’m Pip. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.'},
   {page: 'home', target: 'tour-leaderboard', title: 'Start with the leaderboard',
     copy: 'Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.'},
   {page: 'agents', target: 'tour-registry', title: 'Find an agent',
