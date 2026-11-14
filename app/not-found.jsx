@@ -1,12 +1,14 @@
 'use client';
+import {useEffect} from 'react';
 import Character from './character.jsx';
 import {PreferencesProvider, PreferencesControls, usePreferences} from './preferences.jsx';
 
 function MissingPage() {
   const {language} = usePreferences();
   const hindi = language === 'hi';
+  useEffect(()=>{document.title='Page not found | Bifrost';},[]);
   return <main className="missing-page">
-    <div className="missing-controls"><a className="brand" href="/">AgentBench</a><PreferencesControls/></div>
+    <div className="missing-controls"><a className="brand" href="/">Bifrost</a><PreferencesControls/></div>
     <section className="missing-content">
       <p className="missing-code">404</p>
       <h1>{hindi ? 'यह पेज कतार में नहीं है।' : 'This page missed the queue.'}</h1>

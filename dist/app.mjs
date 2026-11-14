@@ -10,8 +10,8 @@ const cookie=key=>document.cookie.split('; ').find(part=>part.startsWith(key+'='
 function setCookie(key,value,maxAge=15552000){
   document.cookie=key+'='+value+'; Path=/; SameSite=Lax; Max-Age='+maxAge+(location.protocol==='https:'?'; Secure':'');
 }
-const preference=cookie('ab_consent')==='yes';
-const state={lang:preference&&cookie('ab_lang')==='hi'?'hi':'en',theme:preference&&['dark','light'].includes(cookie('ab_theme'))?cookie('ab_theme'):(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',logAgent:'quill',attempt:0,outcome:'failed',data:null,origin:'baseline'};
+const preference=cookie('agentbench_consent')==='allow';
+const state={lang:preference&&cookie('agentbench_language')==='hi'?'hi':'en',theme:'light',consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',logAgent:'quill',attempt:0,outcome:'failed',data:null,origin:'baseline'};
 const labels=()=>({...copy[state.lang],...evidenceCopy[state.lang]});
 let original;
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -32,6 +32,7 @@ const links=[['SWE-bench','https://github.com/SWE-bench/SWE-bench'],['OSWorld','
 
 function chrome(){
   const t=labels();
+  document.title=t[route()]+' · Support simulator | Bifrost';
   document.documentElement.lang=state.lang;
   document.documentElement.dataset.theme=state.theme;
   $('language').value=state.lang;
@@ -39,7 +40,7 @@ function chrome(){
   $('theme').textContent=state.theme==='dark'?'☀':'☾';
   $('back').setAttribute('aria-label',t.back);
   $('nav').innerHTML=routes.map(r=>'<a href="#'+r+'"'+(route()===r?' aria-current="page"':'')+'>'+t[r]+'</a>').join('');
-  $('footer').innerHTML='<span>AgentBench Observatory · '+t.suiteName+' v'+e(state.data?.suite.version??'1.0.0')+'</span><div class="actions"><a href="#faq">'+t.methods+'</a><button type="button" data-action="cookies">'+t.cookie+'</button></div>';
+  $('footer').innerHTML='<span>Bifrost · Support simulator · '+t.suiteName+' v'+e(state.data?.suite.version??'1.0.0')+'</span><div class="actions"><a href="#faq">'+t.methods+'</a><button type="button" data-action="cookies">'+t.cookie+'</button></div>';
 }
 
 function filters(withSearch=false,withRelease=true){
@@ -236,7 +237,8 @@ document.addEventListener('click',event=>{
   if(action==='close')$('dialog').close();
   if(action==='allow'||action==='decline'){
     state.consent=action==='allow';
-    for(const [key,val] of [['consent','yes'],['theme',state.theme],['lang',state.lang]])setCookie('ab_'+key,val,state.consent?15552000:0);
+    setCookie('agentbench_consent',state.consent?'allow':'deny');
+    setCookie('agentbench_language',state.lang,state.consent?15552000:0);
     $('dialog').close();
   }
 });
@@ -251,7 +253,7 @@ document.addEventListener('change',event=>{
   if(input.id==='report-files')void importFiles(input);
   if(input.id==='language'){
     state.lang=input.value;
-    if(state.consent)setCookie('ab_lang',state.lang);
+    if(state.consent)setCookie('agentbench_language',state.lang);
     render();
   }
   if(['scenario','release','focus','logAgent','attempt','outcome'].includes(input.id)){
@@ -268,7 +270,7 @@ document.addEventListener('change',event=>{
 });
 $('theme').addEventListener('click',()=>{
   state.theme=state.theme==='dark'?'light':'dark';
-  if(state.consent)setCookie('ab_theme',state.theme);
+
   chrome();
 });
 window.addEventListener('hashchange',()=>{

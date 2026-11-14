@@ -10,7 +10,8 @@ export const number=value=>value==null?'—':new Intl.NumberFormat('en',{maximum
 export async function request(path,{query={},method='GET',token,body,signal}={}){
   const url=new URL(supabase.url+path);
   for(const [key,value] of Object.entries(query))url.searchParams.set(key,value);
-  const response=await fetch(url,{method,signal,headers:{apikey:supabase.key,
+  const boundedSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000);
+  const response=await fetch(url,{method,signal:boundedSignal,headers:{apikey:supabase.key,
     ...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
   if(!response.ok)throw Error('Request failed ('+response.status+')');
   return response.status===204||response.headers.get('content-length')==='0'?null:response.json();

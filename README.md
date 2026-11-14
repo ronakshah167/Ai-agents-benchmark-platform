@@ -1,8 +1,8 @@
-# AgentBench Observatory
+# Bifrost
 
-AgentBench compares **versioned agent harnesses and their underlying models** on the same tasks. The built-in Support Operations suite evaluates account lookup, refunds, and case routing across 60 simulated tasks.
+Bifrost compares **versioned agent harnesses and their underlying models** on the same tasks. The built-in Support Operations suite evaluates account lookup, refunds, and case routing across 60 simulated tasks.
 
-- **Website** [AgentBench Observatory](https://ai-agents-benchmark-platform.vercel.app)
+- **Website** [Bifrost](https://ai-agents-benchmark-platform.vercel.app)
 - **Design** [Figma](https://www.figma.com/design/9Pw7egO1MOKiIgqkJ5CktN)
 
 ## Run locally
@@ -117,3 +117,7 @@ Open **Compare** and choose two agents from the entire public registry, or start
 The first external release includes Terminal-Bench's official 4.1 leaderboard and 2.0/2.1 revision study, plus a selected Harbor 2.0 snapshot. The migration preserves these as separate evaluation cohorts. Missing cost, trial counts and uncertainty are shown as unavailable.
 
 OSWorld-Verified computer-use results come from the official workbook. The 369-task and 361-task splits, step budgets and action modes are distinct cohorts. Only named agent systems and identified computer-use configurations were imported.
+
+## Product navigation and availability
+
+The homepage introduces Bifrost; `#leaderboard` is the published-results view. The support simulator at `/demo/index.html` is a labeled learning lab with scripted agents, simulated timing and cost, and the same pink product palette. Both open in light mode. Initial HTML includes the product introduction and a no-JavaScript explanation; live results require JavaScript. Registry requests time out after 15 seconds with a retry action. Reviewer access remains at `#admin` but is not advertised in public navigation; authentication and database reviewer policies are required. Bifrost is not the AgentBench research benchmark.

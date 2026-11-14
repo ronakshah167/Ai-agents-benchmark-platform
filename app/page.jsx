@@ -8,7 +8,7 @@ import {faqs, tourStops} from './translations.mjs';
 import Character from './character.jsx';
 import SiteTour, {rememberTour, shouldStartTour} from './site-tour.jsx';
 
-const tabs=[['home','Leaderboard'],['agents','Agents'],['benchmarks','Benchmarks'],['compare','Compare'],['peers','Peer groups'],['method','Methodology'],['faq','FAQs']];
+const tabs=[['leaderboard','Leaderboard'],['agents','Agents'],['benchmarks','Benchmarks'],['compare','Compare'],['peers','Peer groups'],['method','Methodology'],['faq','FAQs']];
 const go=(path,id='')=>'#'+path+(id?'/'+encodeURIComponent(id):'');
 const asLabel=value=>value?.replaceAll('_',' ')??'—';
 const interval=r=>r.ci_low==null||r.ci_high==null?'—':number(r.ci_low)+'–'+number(r.ci_high);
@@ -107,12 +107,12 @@ function Review({admin=false}){
   try{
    if(!session){
     const result=await request('/auth/v1/token',{query:{grant_type:'password'},method:'POST',body:{email:form.get('email'),password:form.get('password')}});
-    setSession(result.access_token);
     if(admin){
      const reviewers=await request('/rest/v1/benchmark_reviewers',{token:result.access_token,query:{select:'user_id',limit:1}});
      if(!reviewers.length){setNotice('Reviewer access is required.');return;}
      setEntries(await request('/rest/v1/benchmark_submissions',{token:result.access_token,query:{select:'id,kind,details,status',status:'eq.pending',order:'created_at',limit:50}}));
     }
+    setSession(result.access_token);
    }else{
     const status=form.get('decision');
     if(admin){await request('/rest/v1/benchmark_submissions',{token:session,method:'PATCH',query:{id:'eq.'+form.get('id'),status:'eq.pending'},body:{status}});setEntries(entries.filter(x=>x.id!==form.get('id')));setNotice('Review decision submitted.');}
@@ -131,6 +131,13 @@ function Faq({onStartTour}) {
  </section></>;
 }
 
+function Home({data,onStartTour}) {
+ const {t}=usePreferences();
+ return <><section className="hero dashboard-hero" id="tour-welcome"><div className="hero-copy"><h1>{t('Benchmark AI agents')}</h1><p className="sub">{t('Compare versioned agents under the same conditions and follow each score back to its evidence.')}</p><div className="actions"><a className="button primary" href={go('compare')}>{t('Compare agents')} <span aria-hidden="true">→</span></a><a className="button" href={go('agents')}>{t('Explore agents')}</a><a className="link" href="/demo/index.html">{t('Support simulator')}</a><button type="button" onClick={onStartTour}>{t('Take the tour')}</button></div></div>
+   <dl className="hero-stats"><div><dt>{t('Registered agents')}</dt><dd>{data?.agents.length??'—'}</dd></div><div><dt>{t('Agents with scores')}</dt><dd>{data?new Set(data.leaders.map(r=>r.agent_slug)).size:'—'}</dd></div></dl>
+ </section><section className="panel"><h2>{t('Compare systems, not just models')}</h2><p>{t('Each agent combines a model, tools, prompts, memory and runtime limits. Open the leaderboard for published scores, choose two agents to compare, or inspect a run to see its source and conditions.')}</p><div className="actions"><a className="button primary" href="#leaderboard">{t('Leaderboard')}</a><a className="link" href="#method">{t('Methodology')}</a></div><p className="muted">{t('The support simulator is a learning lab with scripted agents and simulated costs, not a ranking of real commercial agents.')}</p></section></>;
+}
+
 function Dashboard(){
  const {t,openCookies}=usePreferences();
  const [attempt,retry]=useState(0);
@@ -140,6 +147,11 @@ function Dashboard(){
  useEffect(()=>{const ctrl=new AbortController();catalog(ctrl.signal).then(setData).catch(e=>{if(!ctrl.signal.aborted)setError(e.message);});return()=>ctrl.abort();},[attempt]);
  useEffect(()=>{if(shouldStartTour())setTourStep(0);},[]);
  const [page,id]=view;
+ useEffect(()=>{
+   const names={home:'AI agent benchmarks',leaderboard:'Leaderboard',agents:'Agent registry',benchmarks:'Benchmarks',compare:'Compare agents',peers:'Peer groups',method:'Methodology',faq:'FAQs',runs:'Run details',submit:'Submit for review',admin:'Reviewer sign-in'};
+   const entry=data?.[page]?.find?.(item=>item.slug===id);
+   document.title=(entry?.name??names[page]??'Page not found')+' | Bifrost';
+ },[page,id,data]);
 
  function moveTour(step) {
    const destination=go(tourStops[step].page);
@@ -156,23 +168,23 @@ function Dashboard(){
  else if(page==='method')content=<Method/>;
  else if(page==='submit'||page==='admin')content=<Review key={page} admin={page==='admin'}/>;
  else if(page==='runs')content=<Run key={id} id={id}/>;
- else if(!data)content=error?<section className="panel empty"><p>{t('Registry data is unavailable.')}</p><div className="actions">
+ else if(page==='home')content=<><Home data={data} onStartTour={()=>moveTour(0)}/>{error&&<section className="panel mt-4" role="alert"><p>{t('Registry data is unavailable.')}</p><button onClick={()=>{setError('');retry(value=>value+1);}}>{t('Retry')}</button></section>}</>;
+ else if(!data)content=error?<section className="panel empty" role="alert"><h1>{t('Registry data is unavailable.')}</h1><p>{t('The data service did not respond. Retry, or use the local support simulator while it reconnects.')}</p><div className="actions">
    <button onClick={()=>{setError('');retry(value=>value+1);}}>{t('Retry')}</button><a className="link" href="/demo/index.html">{t('Open support benchmark')}</a></div></section>:<Loading label="Loading registry…"/>;
  else if(page==='agents'||page==='benchmarks')content=<Directory key={page} items={data[page]} id={id} type={page} leaders={data.leaders}/>;
  else if(page==='compare')content=<HeadToHead key={id} initial={id} agents={data.agents} leaders={data.leaders} tradeoffs={rows=><Tradeoffs key={rows[0].run_id} rows={rows}/>}/>;
  else if(page==='peers')content=<PeerGroups data={data}/>;
- else content=<><section className="hero dashboard-hero" id="tour-welcome"><div className="hero-copy"><h1>{t('Benchmark AI agents')}</h1><p className="sub">{t('Compare versioned agents under the same conditions and follow each score back to its evidence.')}</p><div className="actions"><a className="button primary" href={go('compare')}>{t('Compare agents')} <span aria-hidden="true">→</span></a><a className="button" href={go('agents')}>{t('Explore agents')}</a><a className="link" href="/demo/index.html">{t('Run support benchmark')}</a><button type="button" onClick={()=>moveTour(0)}>{t('Take the tour')}</button></div></div>
-   <dl className="hero-stats"><div><dt>{t('Registered agents')}</dt><dd>{data.agents.length}</dd></div><div><dt>{t('Agents with scores')}</dt><dd>{new Set(data.leaders.map(r=>r.agent_slug)).size}</dd></div></dl>
- </section><h2>{t('Leaderboard')}</h2><Cohort data={data}/></>;
+ else if(page==='leaderboard')content=<><h1>{t('Leaderboard')}</h1><Cohort data={data}/></>;
+ else content=<Empty>This page is unavailable. Use the navigation to return to Bifrost.</Empty>;
  return <>
    <button className="skip-link" onClick={()=>document.getElementById('main-content').focus()}>{t('Skip to content')}</button>
    <header className="top" id="site-header" tabIndex={-1}><div className="shell nav">
-     <a className="brand" href={go('home')}><span className="mark" aria-hidden="true">A</span>AgentBench</a>
+     <a className="brand" href={go('home')}><span className="mark" aria-hidden="true">B</span>Bifrost</a>
      <nav aria-label={t('Main navigation')}>{tabs.map(([key,label])=><a href={go(key)} key={key} aria-current={page===key?'page':undefined}>{t(label)}</a>)}</nav>
      <PreferencesControls/>
    </div></header>
    <main className="shell" id="main-content" tabIndex={-1}>{content}</main>
-   <footer className="shell foot"><span>AgentBench Observatory</span><div><a href="/demo/index.html">{t('Support benchmark and run logs')}</a><a href={go('submit')}>{t('Submit')}</a><a href={go('admin')}>{t('Admin')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
+   <footer className="shell foot"><span>Bifrost · Agent benchmarks</span><div><a href="/demo/index.html">{t('Support benchmark and run logs')}</a><a href={go('submit')}>{t('Submit')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
    <BackToTop/>
    {tourStep===null && <button className="pip-launcher" onClick={()=>moveTour(0)} aria-label={t('Take the tour')}><Character/><span>{t('Pip · Your guide')}</span></button>}
    <SiteTour step={tourStep} page={page} ready={Boolean(data)} onMove={moveTour} onClose={closeTour}/>

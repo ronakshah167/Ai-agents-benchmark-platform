@@ -6,7 +6,7 @@ export const messages = {en: {}, hi: {
   "Back": "पीछे",
   "Next": "आगे",
   "Finish": "समाप्त करें",
-  "Welcome to AgentBench": "AgentBench में आपका स्वागत है",
+  "Welcome to Bifrost": "Bifrost में आपका स्वागत है",
   "I’m Pip. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.": "मैं पिप हूँ। मैं आपको एजेंट खोजना, दूसरे एजेंट से तुलना करना और स्कोर का स्रोत देखना सिखाऊँगा।",
   "Start with the leaderboard": "लीडरबोर्ड से शुरू करें",
   "Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.": "बेंचमार्क और परीक्षण सेटअप चुनने के लिए तुलना योग्य समूह का उपयोग करें। श्रेणी, स्वरूप, लाइसेंस या मूल्य श्रेणी से नतीजे फ़िल्टर करें।",
@@ -186,7 +186,7 @@ export const messages = {en: {}, hi: {
 }};
 
 export const faqs = [
-  ['How do I filter the leaderboard?', 'On Leaderboard, choose a Comparable cohort first. Then narrow the results by category, form factor, license, or price tier.', 'home', 'Open leaderboard'],
+  ['How do I filter the leaderboard?', 'On Leaderboard, choose a Comparable cohort first. Then narrow the results by category, form factor, license, or price tier.', 'leaderboard', 'Open leaderboard'],
   ['How do I find an agent or model version?', 'On Agents, search by the agent’s name and open its profile. The Versions section shows the underlying model when disclosed.', 'agents', 'Open agent registry'],
   ['How do I compare two agents?', 'On Compare, select a first and second agent. Filter by benchmark or select a column heading to sort. Use Link to this comparison to share the pair.', 'compare', 'Open comparison'],
   ['What does the Delta column mean?', 'Delta is the first agent’s score minus the second’s. For percentage scores, it is shown in percentage points. Check the confidence intervals when available.'],
@@ -198,9 +198,9 @@ export const faqs = [
 
 
 export const tourStops = [
-  {page: 'home', target: 'tour-welcome', title: 'Welcome to AgentBench',
+  {page: 'home', target: 'tour-welcome', title: 'Welcome to Bifrost',
     copy: 'I’m Pip. I’ll show you how to find an AI agent, compare it with another, and check where the scores came from.'},
-  {page: 'home', target: 'tour-leaderboard', title: 'Start with the leaderboard',
+  {page: 'leaderboard', target: 'tour-leaderboard', title: 'Start with the leaderboard',
     copy: 'Use Comparable cohort to pick a benchmark and test setup. The filters let you narrow the results by category, form factor, license, or price tier.'},
   {page: 'agents', target: 'tour-registry', title: 'Find an agent',
     copy: 'Search the registry by agent name. Open an agent to see its versions, models, and any published benchmark runs.'},
