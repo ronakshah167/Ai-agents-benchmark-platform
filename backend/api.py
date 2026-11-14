@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
 from .db import Database
 from .scoring import compare
 
-app = FastAPI(title='AgentBench REST', version='1.0')
+app = FastAPI(title='Bifrost REST', version='1.0')
 clients = defaultdict(deque)
 limiter_lock = Lock()
 

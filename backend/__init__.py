@@ -1,1 +1,1 @@
-"""AgentBench collection, scoring, and API."""
+"""Bifrost collection, scoring, and API."""

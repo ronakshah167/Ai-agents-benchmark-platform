@@ -4,8 +4,8 @@ import {createContext, useContext, useEffect, useState} from 'react';
 import {messages} from './translations.mjs';
 
 const Preferences = createContext(null);
-const consentKey = 'agentbench_consent';
-const preferenceKeys = ['agentbench_theme', 'agentbench_language'];
+const consentKey = 'bifrost_consent';
+const preferenceKeys = ['bifrost_theme', 'bifrost_language'];
 
 function cookie(key, value, age = 15552000) {
   document.cookie = `${key}=${value}; Path=/; Max-Age=${age}; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
@@ -18,9 +18,10 @@ export function PreferencesProvider({children}) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => {
     const saved = Object.fromEntries(document.cookie.split(';').map(part => part.trim().split('=')));
-    const decision = saved[consentKey];
+    const decision = saved[consentKey] ?? saved.agentbench_consent;
     if (decision === 'allow') {
-      if (Object.hasOwn(messages, saved[preferenceKeys[1]])) setLanguage(saved[preferenceKeys[1]]);
+      const savedLanguage = saved[preferenceKeys[1]] ?? saved.agentbench_language;
+      if (Object.hasOwn(messages, savedLanguage)) setLanguage(savedLanguage);
     }
     setConsent(decision === 'allow' || decision === 'deny' ? decision : 'unset');
   }, []);
@@ -29,13 +30,14 @@ export function PreferencesProvider({children}) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = language;
     if (consent === 'allow') {
-      cookie(preferenceKeys[0], '', 0);
+      cookie(consentKey, 'allow');
       cookie(preferenceKeys[1], language);
     }
   }, [consent, theme, language]);
   const t = (key, values = {}) => (messages[language][key] ?? key).replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
   function decide(decision) {
     cookie(consentKey, decision);
+    for (const key of ['agentbench_consent','agentbench_theme','agentbench_language']) cookie(key, '', 0);
     if (decision === 'deny') preferenceKeys.forEach(key => cookie(key, '', 0));
     setConsent(decision);
     setSettingsOpen(false);

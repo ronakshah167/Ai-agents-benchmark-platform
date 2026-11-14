@@ -1,4 +1,4 @@
-# AgentBench registry architecture
+# Bifrost registry architecture
 
 ```mermaid
 flowchart TD

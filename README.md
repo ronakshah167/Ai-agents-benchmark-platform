@@ -121,3 +121,29 @@ OSWorld-Verified computer-use results come from the official workbook. The 369-t
 ## Product navigation and availability
 
 The homepage introduces Bifrost; `#leaderboard` is the published-results view. The support simulator at `/demo/index.html` is a labeled learning lab with scripted agents, simulated timing and cost, and the same pink product palette. Both open in light mode. Initial HTML includes the product introduction and a no-JavaScript explanation; live results require JavaScript. Registry requests time out after 15 seconds with a retry action. Reviewer access remains at `#admin` but is not advertised in public navigation; authentication and database reviewer policies are required. Bifrost is not the AgentBench research benchmark.
+
+### Evaluate an external agent
+
+The Support Operations runner can call an existing tool-calling model with
+`BENCH_PROTOCOL=chat` (the default), or an agent you operate with
+`BENCH_PROTOCOL=agent`. For the latter, set `BENCH_ENDPOINT` to your agent's
+HTTPS route or a local HTTP route. Set `BENCH_AGENT`, `BENCH_VERSION`,
+`BENCH_MODEL` and optionally `BENCH_API_KEY` as with the model runner.
+
+The agent receives a POST with `task_id`, `messages`, `tools`, `step` and
+`max_steps`. Return `{"message":{"content":"report","tool_calls":[]}}` for a
+final decision or one or more OpenAI-style function calls in `tool_calls`.
+Bifrost executes the calls against the simulated support environment and
+grades the final answer and recorded state. The agent can use its own
+model, routing, prompts and memory. Use the messages to reconstruct the
+current turn. The runner measures round-trip task time and leaves cost
+unknown unless independently established.
+
+Upload the resulting JSON from **Submit**. The app and Supabase validate
+the report and queue it as user-submitted evidence. It stays private pending
+review. Hosted execution of Terminal-Bench or OSWorld is outside this runner.
+
+For public email sign-up, configure custom SMTP in Supabase and allow
+`https://ai-agents-benchmark-platform.vercel.app/auth-callback/` as an
+Auth redirect. Set Site URL to the production homepage. The callback also
+handles magic links that return to that homepage.

@@ -201,3 +201,5 @@ body:has(.tour-dialog[open]) .cookie-banner { visibility: hidden; }
 .tour-intro .character-feet { bottom:4px; left:18px; height:13px; width:7px; box-shadow:13px 0 var(--character-color),41px 0 var(--character-color),54px 0 var(--character-color); }
 .foot { padding-bottom:110px; }
 @media(max-width:620px){.pip-launcher{padding:5px 10px;gap:5px}.pip-launcher .guide-character{width:52px;flex-basis:52px}.back-top{bottom:100px}}
+
+button.sort-heading { border: 0; background: transparent; min-height: 28px; padding: 2px; text-align: left; }

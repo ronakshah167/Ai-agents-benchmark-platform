@@ -10,8 +10,8 @@ const cookie=key=>document.cookie.split('; ').find(part=>part.startsWith(key+'='
 function setCookie(key,value,maxAge=15552000){
   document.cookie=key+'='+value+'; Path=/; SameSite=Lax; Max-Age='+maxAge+(location.protocol==='https:'?'; Secure':'');
 }
-const preference=cookie('agentbench_consent')==='allow';
-const state={lang:preference&&cookie('agentbench_language')==='hi'?'hi':'en',theme:'light',consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',logAgent:'quill',attempt:0,outcome:'failed',data:null,origin:'baseline'};
+const preference=(cookie('bifrost_consent')??cookie('agentbench_consent'))==='allow';
+const state={lang:preference&&(cookie('bifrost_language')??cookie('agentbench_language'))==='hi'?'hi':'en',theme:'light',consent:preference,ids:['relay','atlas'],scenario:'all',release:null,search:'',sort:'success_pct',direction:-1,focus:'atlas',logAgent:'quill',attempt:0,outcome:'failed',data:null,origin:'baseline'};
 const labels=()=>({...copy[state.lang],...evidenceCopy[state.lang]});
 let original;
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -37,6 +37,7 @@ function chrome(){
   document.documentElement.dataset.theme=state.theme;
   $('language').value=state.lang;
   $('theme').setAttribute('aria-label',t.theme);
+  $('theme').disabled=false;
   $('theme').textContent=state.theme==='dark'?'☀':'☾';
   $('back').setAttribute('aria-label',t.back);
   $('nav').innerHTML=routes.map(r=>'<a href="#'+r+'"'+(route()===r?' aria-current="page"':'')+'>'+t[r]+'</a>').join('');
@@ -237,8 +238,8 @@ document.addEventListener('click',event=>{
   if(action==='close')$('dialog').close();
   if(action==='allow'||action==='decline'){
     state.consent=action==='allow';
-    setCookie('agentbench_consent',state.consent?'allow':'deny');
-    setCookie('agentbench_language',state.lang,state.consent?15552000:0);
+    setCookie('bifrost_consent',state.consent?'allow':'deny');
+    setCookie('bifrost_language',state.lang,state.consent?15552000:0);
     $('dialog').close();
   }
 });
@@ -253,7 +254,7 @@ document.addEventListener('change',event=>{
   if(input.id==='report-files')void importFiles(input);
   if(input.id==='language'){
     state.lang=input.value;
-    if(state.consent)setCookie('agentbench_language',state.lang);
+    if(state.consent)setCookie('bifrost_language',state.lang);
     render();
   }
   if(['scenario','release','focus','logAgent','attempt','outcome'].includes(input.id)){

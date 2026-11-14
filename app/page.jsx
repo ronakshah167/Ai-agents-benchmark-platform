@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import {CartesianGrid,ResponsiveContainer,Scatter,ScatterChart,Tooltip,XAxis,YAxis} from 'recharts';
 import {allRows,catalog,cohort,number,request,safeUrl} from './data.mjs';
+import Submit, {captureSubmissionLogin} from './submit.jsx';
 import HeadToHead from './head-to-head.jsx';
 import {BackToTop, Loading, PreferencesControls, PreferencesProvider, usePreferences} from './preferences.jsx';
 import {faqs, tourStops} from './translations.mjs';
@@ -14,10 +15,25 @@ const asLabel=value=>value?.replaceAll('_',' ')??'—';
 const interval=r=>r.ci_low==null||r.ci_high==null?'—':number(r.ci_low)+'–'+number(r.ci_high);
 const external=(url,label)=>safeUrl(url)?<a className="link" href={safeUrl(url)}>{label}</a>:null;
 function Empty({children}){const {t}=usePreferences();return <p className="panel empty">{typeof children==='string'?t(children):children}</p>;}
-function Rows({rows,peer=false}){
+function Rows({rows,peer=false,ranking=false}){
  const {t}=usePreferences();
- return rows.length?<div className="table-scroll" tabIndex={0}><table><thead><tr><th>{t('Agent')}</th><th>{t('Benchmark / metric')}</th><th>{t('Raw')}</th><th>{t('Score / 100')}</th><th>95% CI</th><th>{t('Provenance')}</th>{peer&&<th>{t('Peer percentile')}</th>}</tr></thead><tbody>
- {rows.map(r=><tr key={[r.run_id,r.metric,r.peer_group].join('/')}><td><a className="link" href={go('agents',r.agent_slug)}>{r.agent}</a><br/><span className="muted">{r.version_label}</span></td><td>{r.benchmark}<br/><span className="muted">{r.metric} · {r.dataset_version}</span></td><td>{number(r.raw_value)}</td><td>{number(r.normalized_score)}</td><td>{interval(r)}</td><td><a className="link" href={go('runs',r.run_id)}>{t('Run details')}</a> · {external(r.source_url,t('Source'))}<br/><span className="badge">{r.verified?(t(r.run_type==='platform_run'?'Platform run':'Benchmark-published')):asLabel(r.run_type)}</span></td>{peer&&<td>{r.cohort_size>1?number(r.peer_percentile):'—'} ({r.cohort_size})</td>}</tr>)}
+ const [order,setOrder]=useState({key:'rank',direction:1});
+ const displayed=ranking?rows.toSorted((left,right)=>{
+   const a=left[order.key], b=right[order.key];
+   if(a==null||b==null)return Number(a==null)-Number(b==null);
+   return order.direction*(typeof a==='number'?a-b:a.localeCompare(b));
+ }):rows;
+ function heading(key,label){
+   if(!ranking)return <th>{t(label)}</th>;
+   const active=order.key===key;
+   return <th aria-sort={active?(order.direction===1?'ascending':'descending'):'none'}>
+     <button type="button" className="sort-heading" onClick={()=>setOrder({key,direction:active?-order.direction:key==='normalized_score'?-1:1})}>
+       {t(label)} <span aria-hidden="true">{active?(order.direction===1?'↑':'↓'):'↕'}</span>
+     </button>
+   </th>;
+ }
+ return rows.length?<div className="table-scroll" tabIndex={0}><table><thead><tr>{ranking&&heading('rank','Rank')}{heading('agent','Agent')}<th>{t('Benchmark / metric')}</th>{heading('raw_value','Raw')}{heading('normalized_score','Score / 100')}<th>95% CI</th><th>{t('Provenance')}</th>{peer&&<th>{t('Peer percentile')}</th>}</tr></thead><tbody>
+ {displayed.map(r=><tr key={[r.run_id,r.metric,r.peer_group].join('/')}>{ranking&&<td>{r.rank}</td>}<td><a className="link" href={go('agents',r.agent_slug)}>{r.agent}</a><br/><span className="muted">{r.version_label}</span></td><td>{r.benchmark}<br/><span className="muted">{r.metric} · {r.dataset_version}</span></td><td>{number(r.raw_value)}</td><td>{number(r.normalized_score)}</td><td>{interval(r)}</td><td><a className="link" href={go('runs',r.run_id)}>{t('Run details')}</a> · {external(r.source_url,t('Source'))}<br/><span className="badge">{r.verified?(t(r.run_type==='platform_run'?'Platform run':'Benchmark-published')):asLabel(r.run_type)}</span></td>{peer&&<td>{r.cohort_size>1?number(r.peer_percentile):'—'} ({r.cohort_size})</td>}</tr>)}
  </tbody></table></div>:<Empty>No published results match this selection.</Empty>;
 }
 function Tradeoffs({rows}){
@@ -34,17 +50,18 @@ function Cohort({data}){
  const {t}=usePreferences();
  const [chosen,setChosen]=useState(''),[filters,setFilters]=useState({});
  const groups=Map.groupBy(data.leaders,cohort);
- const key=groups.has(chosen)?chosen:[...groups].find(([,rows])=>rows[0].benchmark_slug==='terminal-bench'&&rows[0].dataset_version==='4.1')?.[0]??groups.keys().next().value;
+ const coverage=rows=>new Set(rows.filter(row=>row.verified&&row.normalized_score!=null).map(row=>row.agent_slug)).size;
+ const key=groups.has(chosen)?chosen:[...groups].sort((a,b)=>coverage(b[1])-coverage(a[1]))[0]?.[0];
  if(!key)return <Empty>{t('There are no published scores yet.')} <a className="link" href="/demo/index.html">{t('Open support benchmark')}</a></Empty>;
  const all=groups.get(key);
  const fields=[['category','Category'],['form_factor','Form factor'],['license_type','License'],['price_tier','Price tier']];
- const rows=all.filter(r=>fields.every(([field])=>!filters[field]||r[field]===filters[field]));
+ const rows=all.map((row,index)=>({...row,rank:index+1})).filter(r=>fields.every(([field])=>!filters[field]||r[field]===filters[field]));
  const focus=all[0];
  return <><div className="filters" id="tour-leaderboard"><label>{t('Comparable cohort')} <select value={key} onChange={e=>{setChosen(e.target.value);setFilters({});}}>
  {[...groups].map(([id,[r]],i)=><option key={id} value={id}>{r.benchmark} · {r.metric} · {r.dataset_version}/{r.dataset_split} · {r.harness} · {i+1}</option>)}</select></label>
  {fields.map(([field,label])=><label key={field}>{t(label)} <select value={filters[field]??''} onChange={e=>setFilters({...filters,[field]:e.target.value})}><option value="">{t('All')}</option>{[...new Set(all.map(r=>r[field]).filter(Boolean))].map(v=><option key={v} value={v}>{asLabel(v)}</option>)}</select></label>)}</div>
  <p className="muted">{t('Method {version} · {trials}. Each cohort fixes dataset, split, harness and runtime constraints.',{version:focus.method_version,trials:focus.n_trials==null?t('Attempt count not reported'):t('{count} recorded trial(s)',{count:focus.n_trials})})}</p>
- <div className="panel mt-4"><Rows rows={rows}/></div></>;
+ <div className="panel mt-4"><Rows key={key} rows={rows} ranking/></div></>;
 }
 function AgentScores({slug}){
  const {t}=usePreferences();
@@ -143,7 +160,7 @@ function Dashboard(){
  const [attempt,retry]=useState(0);
  const [tourStep,setTourStep]=useState(null);
  const [view,setView]=useState(['home','']),[data,setData]=useState(null),[error,setError]=useState('');
- useEffect(()=>{const update=()=>{const [page,id='']=location.hash.slice(1).split('/');let parsed='';try{parsed=decodeURIComponent(id);}catch{}setView([page||'home',parsed]);};update();addEventListener('hashchange',update);return()=>removeEventListener('hashchange',update);},[]);
+ useEffect(()=>{const update=()=>{if(captureSubmissionLogin())return;const [page,id='']=location.hash.slice(1).split('/');let parsed='';try{parsed=decodeURIComponent(id);}catch{}setView([page||'home',parsed]);};update();addEventListener('hashchange',update);return()=>removeEventListener('hashchange',update);},[]);
  useEffect(()=>{const ctrl=new AbortController();catalog(ctrl.signal).then(setData).catch(e=>{if(!ctrl.signal.aborted)setError(e.message);});return()=>ctrl.abort();},[attempt]);
  useEffect(()=>{if(shouldStartTour())setTourStep(0);},[]);
  const [page,id]=view;
@@ -166,7 +183,8 @@ function Dashboard(){
  let content;
  if(page==='faq')content=<Faq onStartTour={()=>moveTour(0)}/>;
  else if(page==='method')content=<Method/>;
- else if(page==='submit'||page==='admin')content=<Review key={page} admin={page==='admin'}/>;
+ else if(page==='submit')content=<Submit status={id}/>;
+ else if(page==='admin')content=<Review admin/>;
  else if(page==='runs')content=<Run key={id} id={id}/>;
  else if(page==='home')content=<><Home data={data} onStartTour={()=>moveTour(0)}/>{error&&<section className="panel mt-4" role="alert"><p>{t('Registry data is unavailable.')}</p><button onClick={()=>{setError('');retry(value=>value+1);}}>{t('Retry')}</button></section>}</>;
  else if(!data)content=error?<section className="panel empty" role="alert"><h1>{t('Registry data is unavailable.')}</h1><p>{t('The data service did not respond. Retry, or use the local support simulator while it reconnects.')}</p><div className="actions">

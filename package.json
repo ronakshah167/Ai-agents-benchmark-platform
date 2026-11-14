@@ -1,5 +1,5 @@
 {
-  "name": "agentbench-observatory",
+  "name": "bifrost-agent-benchmarks",
   "private": true,
   "scripts": {
     "build": "node scripts/prepare-demo.mjs && next build",

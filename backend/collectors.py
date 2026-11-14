@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 import httpx
 from .scoring import normalize,wilson
 
-USER_AGENT='AgentBenchRegistry/1.0'
+USER_AGENT='BifrostRegistry/1.0'
 GITHUB_PATH=re.compile(r'^/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')
 SWE_PATH=re.compile(r'^/SWE-bench/experiments/[a-f0-9]{40}/evaluation/(verified|lite|full)/[A-Za-z0-9_.-]+/(?:results|per_instance_details)\.json$',re.I)
 
