@@ -184,7 +184,7 @@ function Dashboard(){
      <PreferencesControls/>
    </div></header>
    <main className="shell" id="main-content" tabIndex={-1}>{content}</main>
-   <footer className="shell foot"><span>Bifrost · Agent benchmarks</span><div><a href="/demo/index.html">{t('Support benchmark and run logs')}</a><a href={go('submit')}>{t('Submit')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
+   <footer className="shell foot"><span>Bifrost · Agent benchmarks</span><div><a href="/demo/index.html">{t('Support simulator · scripted demo')}</a><a href={go('submit')}>{t('Submit')}</a><button onClick={openCookies}>{t('Cookie preferences')}</button></div></footer>
    <BackToTop/>
    {tourStep===null && <button className="pip-launcher" onClick={()=>moveTour(0)} aria-label={t('Take the tour')}><Character/><span>{t('Pip · Your guide')}</span></button>}
    <SiteTour step={tourStep} page={page} ready={Boolean(data)} onMove={moveTour} onClose={closeTour}/>
