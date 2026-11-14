@@ -50,7 +50,7 @@ export default function SiteTour({step, page, ready, onMove, onClose}) {
     {stop && <>
       <div className="tour-intro">
         <Character/>
-        <div><p className="tour-name">{t('Pixel · Your guide')}</p><h2 id="tour-title" ref={title} tabIndex={-1}>{t(stop.title)}</h2></div>
+        <div><p className="tour-name">{t('Pip · Your guide')}</p><h2 id="tour-title" ref={title} tabIndex={-1}>{t(stop.title)}</h2></div>
       </div>
       <p id="tour-copy">{t(stop.copy)}</p>
       <div className="tour-progress" aria-label={t('Step {step} of {total}', {step: step + 1, total: tourStops.length})}>
