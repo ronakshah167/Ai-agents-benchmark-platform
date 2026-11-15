@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {CartesianGrid,ResponsiveContainer,Scatter,ScatterChart,Tooltip,XAxis,YAxis} from 'recharts';
 import {allRows,catalog,cohort,number,request,safeUrl} from './data.mjs';
 import Submit, {captureSubmissionLogin} from './submit.jsx';
+import BenchmarkReplay from './benchmark-replay.jsx';
 import HeadToHead from './head-to-head.jsx';
 import {BackToTop, Loading, PreferencesControls, PreferencesProvider, usePreferences} from './preferences.jsx';
 import {faqs, tourStops} from './translations.mjs';
@@ -33,7 +34,7 @@ function Rows({rows,peer=false,ranking=false}){
    </th>;
  }
  return rows.length?<div className="table-scroll" tabIndex={0}><table><thead><tr>{ranking&&heading('rank','Rank')}{heading('agent','Agent')}<th>{t('Benchmark / metric')}</th>{heading('raw_value','Raw')}{heading('normalized_score','Score / 100')}<th>95% CI</th><th>{t('Provenance')}</th>{peer&&<th>{t('Peer percentile')}</th>}</tr></thead><tbody>
- {displayed.map(r=><tr key={[r.run_id,r.metric,r.peer_group].join('/')}>{ranking&&<td>{r.rank}</td>}<td><a className="link" href={go('agents',r.agent_slug)}>{r.agent}</a><br/><span className="muted">{r.version_label}</span></td><td>{r.benchmark}<br/><span className="muted">{r.metric} · {r.dataset_version}</span></td><td>{number(r.raw_value)}</td><td>{number(r.normalized_score)}</td><td>{interval(r)}</td><td><a className="link" href={go('runs',r.run_id)}>{t('Run details')}</a> · {external(r.source_url,t('Source'))}<br/><span className="badge">{r.verified?(t(r.run_type==='platform_run'?'Platform run':'Benchmark-published')):asLabel(r.run_type)}</span></td>{peer&&<td>{r.cohort_size>1?number(r.peer_percentile):'—'} ({r.cohort_size})</td>}</tr>)}
+ {displayed.map(r=><tr key={[r.run_id,r.metric,r.peer_group].join('/')}>{ranking&&<td>{r.rank}</td>}<td><a className="link" href={go('agents',r.agent_slug)}>{r.agent}</a><br/><span className="muted">{r.version_label}</span></td><td>{r.benchmark}<br/><span className="muted">{r.metric} · {r.dataset_version}</span></td><td>{number(r.raw_value)}</td><td>{number(r.normalized_score)}</td><td>{interval(r)}</td><td><a className="link" href={go('runs',r.run_id)}>{t('Run details')}</a> · {external(r.source_url,t('Source'))}<br/><span className="badge">{r.verified?(t(r.benchmark_slug==='bfcl-v4-math-subset'?'Verified by Bifrost':r.run_type==='platform_run'?'Platform run':'Benchmark-published')):asLabel(r.run_type)}</span></td>{peer&&<td>{r.cohort_size>1?number(r.peer_percentile):'—'} ({r.cohort_size})</td>}</tr>)}
  </tbody></table></div>:<Empty>No published results match this selection.</Empty>;
 }
 function Tradeoffs({rows}){
@@ -83,7 +84,7 @@ function Directory({items,id,type,leaders}){
    const item=items.find(r=>r.slug===id);
    if(!item)return <Empty>This entry is unavailable.</Empty>;
    return <><div className="hero"><h1>{item.name}</h1><p>{item.description??asLabel(item.category??item.domain)}</p><p className="actions">{external(item.homepage_url??item.paper_url,t('Website'))}{external(item.repo_url,t('Repository'))}{type==='agents'&&<a className="link" href={go('compare',item.slug)}>{t('Compare this agent')}</a>}{item.contamination_risk&&<span>{t('Contamination risk {risk}',{risk:item.contamination_risk})}</span>}</p></div>
-   {type==='agents'?<><Versions key={item.id} id={item.id}/><AgentScores key={item.slug} slug={item.slug}/></>:<div className="panel"><Rows rows={leaders.filter(r=>r.benchmark_slug===id)}/></div>}</>;
+   {type==='agents'?<><Versions key={item.id} id={item.id}/><AgentScores key={item.slug} slug={item.slug}/></>:<div className="panel"><Rows rows={leaders.filter(r=>r.benchmark_slug===id)}/></div>}{id==='bfcl-v4-math-subset'&&<BenchmarkReplay/>}</>;
  }
  return <><h1>{t(type==='agents'?'Agent registry':'Benchmark registry')}</h1><div className="filters" id={type==='agents'?'tour-registry':undefined}><input type="search" aria-label={t('Search registry')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={t('Search registry')}/></div><div className="grid-cards">{visible.map(item=><article className="card" key={item.id}><h2><a href={go(type,item.slug)}>{item.name}</a></h2><p className="muted">{asLabel(item.category??item.domain)}</p>{type==='agents'&&<span className="badge">{t(scored.has(item.slug)?'Benchmark results':'No published score')}</span>}<p>{item.description}</p></article>)}</div>{!visible.length&&<Empty>{items.length?'No entries match this search.':'Reviewed entries will appear here.'}</Empty>}</>;
 }
@@ -104,9 +105,14 @@ function Run({id}){
  if(!result)return <Loading label="Loading run evidence…"/>;
  const [scores,evidence]=result;
  if(!scores.length)return <Empty>This run is unpublished or unavailable.</Empty>;
- const current=scores[0], release=/release-(\d+)$/.exec(current.version_label);
+ const current=scores[0];
+ const isBifrostReplay=current.benchmark_slug==='bfcl-v4-math-subset';
+ const latencies=evidence.map(row=>isBifrostReplay?row.trace?.latency_ms:row.latency_ms)
+   .filter(value=>typeof value==='number'&&Number.isFinite(value)).sort((a,b)=>a-b);
+ const p95=latencies[Math.ceil(latencies.length*0.95)-1];
+ const release=/release-(\d+)$/.exec(current.version_label);
  const demo=current.benchmark_slug==='support-operations'&&release?'/demo/index.html?'+new URLSearchParams({agent:current.agent_slug.replace(/^support-/,''),release:Number(release[1])-1})+'#evidence':null;
- return <><h1>{t('Run details')}</h1><div className="panel"><Rows rows={scores}/><p className="muted">{t('Retrieved {date}',{date:scores[0].retrieved_at})} · {scores[0].harness}</p><pre>{JSON.stringify(scores[0].constraints,null,2)}</pre></div><section className="panel mt-4"><h2>{t('Task evidence')}</h2>{evidence.length?evidence.map(row=><details key={row.task+'/'+row.attempt}><summary>{row.task} · {t('Attempt {count}',{count:row.attempt})} · {row.passed?t('Passed'):row.failure_category??t('Failed')}</summary><pre>{JSON.stringify(row.trace,null,2)}</pre></details>):demo?<a className="link" href={demo}>{t('Open reproducible task evidence')}</a>:<p className="muted">{t('No task traces have been released for this run.')}</p>}</section></>;
+ return <><h1>{t('Run details')}</h1><div className="panel"><Rows rows={scores}/><p className="muted">{t('Retrieved {date}',{date:scores[0].retrieved_at})} · {scores[0].harness}</p><dl className="grid-cards"><div><dt>Run cost</dt><dd>{current.total_cost_usd==null?'Unavailable · no run-specific billing was published':isBifrostReplay?'$0 model-provider cost · hosting excluded':current.constraints?.tool_cost==='simulated'?'Simulated · $'+current.total_cost_usd:'$'+current.total_cost_usd}</dd></div><div><dt>p95 task latency</dt><dd>{p95==null?'Unavailable · no per-task timings were published':p95.toFixed(isBifrostReplay?3:0)+' ms'+(isBifrostReplay?' · argument binding only':' · published task evidence')}</dd></div></dl><pre>{JSON.stringify(scores[0].constraints,null,2)}</pre></div><section className="panel mt-4"><h2>{t('Task evidence')}</h2>{evidence.length?evidence.map(row=><details key={row.task+'/'+row.attempt}><summary>{row.task} · {t('Attempt {count}',{count:row.attempt})} · {row.passed?t('Passed'):row.failure_category??t('Failed')}</summary><pre>{JSON.stringify(row.trace,null,2)}</pre></details>):demo?<a className="link" href={demo}>{t('Open reproducible task evidence')}</a>:<p className="muted">{t('No task traces have been released for this run.')}</p>}</section></>;
 }
 function PeerGroups({data}){
  const {t}=usePreferences();
@@ -192,7 +198,7 @@ function Dashboard(){
  else if(page==='agents'||page==='benchmarks')content=<Directory key={page} items={data[page]} id={id} type={page} leaders={data.leaders}/>;
  else if(page==='compare')content=<HeadToHead key={id} initial={id} agents={data.agents} leaders={data.leaders} tradeoffs={rows=><Tradeoffs key={rows[0].run_id} rows={rows}/>}/>;
  else if(page==='peers')content=<PeerGroups data={data}/>;
- else if(page==='leaderboard')content=<><h1>{t('Leaderboard')}</h1><Cohort data={data}/></>;
+ else if(page==='leaderboard')content=<><h1>{t('Leaderboard')}</h1><p><a className="link" href={go('benchmarks','bfcl-v4-math-subset')}>Run the hosted BFCL math subset</a></p><Cohort data={data}/></>;
  else content=<Empty>This page is unavailable. Use the navigation to return to Bifrost.</Empty>;
  return <>
    <button className="skip-link" onClick={()=>document.getElementById('main-content').focus()}>{t('Skip to content')}</button>

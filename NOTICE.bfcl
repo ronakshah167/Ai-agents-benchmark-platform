@@ -1,0 +1,5 @@
+Bifrost includes a derived subset of Berkeley Function Calling Leaderboard v4.
+Source: https://github.com/ShishirPatil/gorilla/tree/6ea57973c7a6097fd7c5915698c54c17c5b1b6c8/berkeley-function-call-leaderboard
+Prompts, required parameter names, and accepted values from simple_python IDs
+0–12 and 17–22 were extracted and reformatted for the Bifrost runner.
+The upstream license is reproduced in LICENSE.bfcl.

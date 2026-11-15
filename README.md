@@ -147,3 +147,18 @@ For public email sign-up, configure custom SMTP in Supabase and allow
 `https://ai-agents-benchmark-platform.vercel.app/auth-callback/` as an
 Auth redirect. Set Site URL to the production homepage. The callback also
 handles magic links that return to that homepage.
+
+### Hosted benchmark and verification
+
+Open **Benchmarks → BFCL v4 Math Subset** to re-run Bifrost Numeric Binder
+on 19 pinned BFCL v4 Simple Python arithmetic tasks. Supabase executes the
+same baseline and structural argument grader used to publish the initial
+score. The public run links to each task's expected and actual arguments.
+This is a small public subset with one tool provided per task and a deterministic
+baseline. It uses its own protocol and does not contribute scores to the full BFCL.
+
+The replay reports p95 argument-binding latency and zero model-provider
+cost, excluding hosting. Imported Support Operations JSON includes the
+submitter's measured round-trip latency. Provider cost remains unavailable
+without run-specific billing. Submitted reports remain private and are
+not promoted to verified scores by upload or reviewer acceptance alone.

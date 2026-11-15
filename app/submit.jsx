@@ -14,7 +14,8 @@ export function captureSubmissionLogin() {
 
   const token = params.get('access_token');
   const expiresAt = Date.now() + Number(params.get('expires_in')) * 1000;
-  if (token && expiresAt > Date.now()) {
+  const valid = token && expiresAt > Date.now();
+  if (valid) {
     try {
       sessionStorage.setItem(sessionKey, JSON.stringify({token, expiresAt}));
     } catch {
@@ -22,7 +23,7 @@ export function captureSubmissionLogin() {
       return true;
     }
   }
-  location.replace(token ? '/#submit' : '/#submit/link-expired');
+  location.replace(valid ? '/#submit' : '/#submit/link-expired');
   return true;
 }
 
@@ -93,6 +94,7 @@ export default function Submit({status}) {
   return <>
     <h1>Submit for review</h1>
     <p className="sub">Register an agent for evaluation, upload a Support Operations report, or send a correction.</p>
+    <p className="muted">Uploaded scores and timings are submitter-reported. A verified score requires independent evidence. Provider costs remain unavailable unless backed by run-specific billing.</p>
     <p role="status">{notice || (status==='link-expired'?'The sign-in link expired or is invalid. Request a new link.':status==='storage-unavailable'?'Enable session storage in this browser and request a new link.':'')}</p>
     <form className="panel stack" onSubmit={submit}>
       {!token ? <>
